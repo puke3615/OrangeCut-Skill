@@ -1,0 +1,12 @@
+{
+  "version": "0.1.0",
+  "buildDate": "2026-11-24",
+  "platform": "win-x64",
+  "zipFileName": "OrangeCut-0.1.0-win-x64.zip",
+  "downloadUrl": "https://orangecut-dl.auroraflow.co/releases/desktop/OrangeCut-0.1.0-win-x64.zip",
+  "fallbackUrls": [
+    "https://github.com/puke3615/OrangeCut-Skill/releases/download/v0.1.0/OrangeCut-0.1.0-win-x64.zip"
+  ],
+  "sha256": "529bf359c53e093bd2f79f2e22ba164b7886ff50331d2bab2329eb53a14f96e9",
+  "sizeBytes": 818921950
+}
