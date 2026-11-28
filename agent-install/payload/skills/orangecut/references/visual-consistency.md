@@ -1,46 +1,46 @@
-# 跨镜头视觉实体一致性
+# Visual consistency across shots
 
-当同一角色、地点或物体需要在不同镜头、场景或集数里被认作“同一个”时使用。本页是 Agent 的制作与验收方法,不是 OC Project 的新字段,也不是固定模型/题材配方。用户指定的画风、剧情状态和场景规则优先。
+Use this workflow when the same character, location, or object must remain recognizable across shots, scenes, or episodes. It adds no Project fields and does not mandate a model or protocol. Follow the user's style and continuity rules first.
 
-## 先定要锁什么
+## Decide what must stay consistent
 
-给反复出现的实体稳定 ID,为每个实体列三类特征:
+Give each recurring entity a stable ID and separate these three categories:
 
-| 类别 | 例子 | 处理 |
+| Category | Example | What to do |
 |---|---|---|
-| 不可变 | 猫的脸型与花纹、房间门窗布局、商品结构与 logo 位置 | 跨镜头对照正式参考,不符合就返修 |
-| 受控变化 | 换装、长大、昼夜、道具损耗 | 记录状态及出现的镜头/集数,不误判为漂移 |
-| 尚未核实 | 商品背面、遮挡处、建筑另一侧 | 标注未知,不要把 AI 猜测变成事实 |
+| Fixed traits | A cat's face and markings, window layout, product shape and logo placement | Check every scene against the approved reference. |
+| Planned changes | Outfit, age, time of day, wear | Record the state and the shots or episodes where it applies. Do not flag these changes as drift. |
+| Unverified details | Back of the product, inside of the cover, unseen side of a building | Mark them unknown. Do not present a generated guess as fact. |
 
-对有解说的片,先定稿、录制或合成声音,量出真实句界再拆分镜头;其他形态仍按自己的声音结构定节奏。每条镜头记录目标时长、动作、构图、涉及的实体及其状态,再选素材来源。不是每个镜头都要带入全部实体。
+For narrated work, finalize and record or synthesize the voiceover, measure its actual timing, then break it into shots. For other formats, follow their own audio structure. Record each shot's duration, action, composition, entities and states, and source material. Do not force every entity into every shot.
 
-## 建立可追溯的参考资产
+## Build traceable references
 
-- 角色:一张经人工验收的多视角定妆图可以同时装下正/侧/背面、脸部特写、标志性配色;每个常驻角色单独成图。逐格检查五官、比例、服装和配饰是否自洽,再升为正式版本。虚构角色可用 `oc media genimage --model gpt` 制作;不是所有实物都应凭空补画。
-- 场景:固定空间结构、门窗、关键陈设与色调。单视角够用时不必生造其他视角;新增视角要与已有布局相容。
-- 商品/真实物体:实拍、官方图和可核实资料优先。AI 推测图要标明未核实,不得取代商品事实;展示与购买相关的细节必须和可信来源核对。
-- 资产记录至少包含稳定 ID、版本、来源/可信度、批准状态和适用的剧情状态。退稿不要和正式参考混用。例如 `C1_cat_v1`, `C2_owner_v1`, `S1_room_v1`。
+- **Characters:** Where useful, make approved front, side, and back views, face close-ups, and a color reference. Give each recurring character a separate sheet. Check features, proportions, clothing, and accessories before approval. For fictional characters, `oc media genimage --model gpt` is one option; do not invent missing details for real subjects.
+- **Locations:** Fix the room layout, doors and windows, key furnishings, and color palette. Use a single view if it is sufficient. Any added view must agree with the established layout.
+- **Products and other real objects:** Prefer original, official, verifiable sources. Label generated guesses as unverified. Check details that affect a purchase against a credible source.
+- **Records:** Track the stable ID, version, source and reliability, approval status, and applicable state. Keep iterations distinct from the approved reference. Examples: `C1_cat_v1`, `C2_owner_v1`, `S1_room_v1`.
 
-这份参考清单、镜头映射与返修记录是制作资料,可与源素材一同归档;不要直接写入 OC 的 Project 文件、SQLite 或缓存。正式素材进入 OC 仍走 `oc asset import` 与语义编辑命令。
+Save the reference list, shot map, and review notes with the source assets, not in the Project files, SQLite, or cache. Bring approved material into OrangeCut with `oc asset import` and semantic edit commands.
 
-## 每个镜头显式绑定参考
+## Bind the right references for each shot
 
-先做少量跨场景/多实体测试镜头,确认参考有效再批量生成。记录镜头到资产版本的映射,例如:
+Test a few cross-scene or multi-entity shots before generating the batch. Map each shot to specific asset versions:
 
 ```text
-镜头 12A | 旁白第 12 句 | 约 4 秒
-参考 1 = C1_cat_v1   (猫)
-参考 2 = C2_owner_v1 (人)
-参考 3 = S1_room_v1  (客厅)
-动作 = 同一间客厅里,一只猫观察一个人;不出现重复角色。
+Shot 12A | Narration line 12 | About 4 seconds
+Reference 1 = C1_cat_v1   (cat)
+Reference 2 = C2_owner_v1 (person)
+Reference 3 = S1_room_v1  (living room)
+Action = A cat watches a person in the same living room; no duplicated characters.
 ```
 
-在独立视频素材工具中按本镜头需要的顺序绑定角色、场景和商品参考，并明确每张图的约束职责。身份参考不等于固定首帧；要求严格首帧时先核实素材工具能力。只传本镜头需要且可信的参考。生成完成后使用正式 OC 导入接口。
+Pass the references in the order the shot requires and specify what each image should control. An identity reference is not a fixed start frame. If the first frame must be exact, confirm the generation tool supports that input. For video-to-video work, start with a reliable video reference. Import the result via OrangeCut's supported interface.
 
-模型上限、并发和提示词语法以当前能力为准。外部工具产生的上游素材可以在独立工作流中完成,但本 Skill 控制 OC Project 时只运行 `oc`;不要把外部接口或脚本写成 OC 命令。
+Check current model limits, concurrency, and prompt requirements in the material-generation workflow. External tools can make source assets, but control the OrangeCut Project only through `oc`.
 
-## 逐镜验收,再看最终成片
+## Review generated footage before delivery
 
-逐镜把首/中/尾及关键动作帧与**正式参考**、相邻镜头并排比较:角色的脸、花纹、服装与数量;场景的门窗、家具和动线;物体的结构、颜色、部件和标识。还要找设定图面板泄漏、意外文字、黑屏和运动中的形变。抽帧是定位手段,不能代替观看有风险的完整动作段;人脸可用 `oc media faces` 辅助预筛,最终视觉判断仍由 Agent/用户完成。
+Compare each shot's first, middle, last, and key action frames against the approved references and adjacent shots. Check faces, proportions, outfits, and character count; then check windows, furniture, and movement through the scene; finally check object shape, color, parts, and branding. Look for morphing, unintended text, black frames, and broken motion. Stills help locate problems but do not replace playback of an entire high-risk action. `oc media faces` can help screen faces; the Agent or user makes the final visual judgment.
 
-先辨别问题来自参考本身、镜头映射、提示词还是生成漂移,只返修受影响的镜头。尤其商品错版不能靠字幕、裁切或剪辑掩盖。粗剪可以暂用占位素材,但最终采用片段必须验收。OC 导出后检查**实际 MP4**的首尾、关键镜头、实体连续性、字幕与声音,不以任务 `ok` 或工程预览代替成片验收。归档最终采用的参考版本、镜头映射与返修结果,供下一集复用。
+Find whether a problem came from the reference, shot map, prompt, or generation, then fix only the affected shot. Do not hide an inaccurate product with captions or cropping. Placeholders are fine for a rough cut, not a final one. Check the actual MP4 after export for the ending, key shots, continuity, captions, and sound; Job `ok` and Project preview are not acceptance. Archive the approved references, shot map, and fixes for the next edit.

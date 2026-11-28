@@ -1,17 +1,9 @@
-# GUI 录音、Audio First 与局部补录
+# Record narration and replace a take in the desktop editor
 
-用户要先录解说再配画面时，可以在 OrangeCut 素材库“导入”旁或时间线工具栏点击“录音”。
-用户亲自选择麦克风并授权，设备和声道选择跨退出重启记住；指定设备断开时要重选，不会静默切换。
-默认单声道 48 kHz / 24-bit PCM WAV。录音停止后自动入库并在面板显示的位置放到独立音轨，
-也可以取消“自动加入时间线”只入库。Space / Esc 停止保存，“放弃本次”删除未入库录音。
-可选倒计时和播放画面；播放原片声音时建议耳机。应用不把麦克风声音直接回放到扬声器。
+Start with **Record** beside Import in the media library or in the timeline toolbar. The user selects and authorizes the microphone. Device and channel choices persist across restarts. If the chosen device disconnects, select it again; the app does not silently switch devices.
 
-局部不好时：范围工具 G 在标尺划选 → 右键音频 → 补录选区中的音频；没有选区则补录整段 Clip。
-停止只入库，试听后才“替换选区”。新旧长度不同必须确认裁多余或留空，不拉伸、不挪后续画面与字幕。
-原资产保留，替换可撤销。联动视频声音先用现有分离音频；锁轨、变速、倒放或定格需要先恢复。
-设备掉线或异常退出后到“最近录音与恢复”检查，恢复文件必须试听头尾再使用。
+The default is mono 48 kHz / 24-bit PCM WAV. On stop, the app imports the recording and places it on a standalone audio track at the position shown in the panel. Turn off automatic timeline placement to import only. Space or Esc stops and saves; discard deletes a take that has not been imported. Use the optional countdown and picture playback as needed. Wear headphones when monitoring source sound; the app does not route the mic to speakers.
 
-录音入口属于用户 GUI，没有 `oc audio record` 或远程打开麦克风接口。Agent 不用浏览器脚本、系统录音或
-修改内部录音目录来代替用户录制；后续以 `oc asset list --json` 读取已入库的普通素材，通过现有语义命令剪辑。
-需要转写先 `oc media transcribe`；需要稳定、清楚的人声按 [audio-enhance.md](audio-enhance.md) 测量与派生处理。
-保持原录音，避免重复增强。加入 BGM 后重新测最终混音，单独人声增强不能代替混音归一化。
+To rerecord a section, select the range on the ruler with G and use the audio clip's context menu. Without a selection, the target is the entire clip. Stop to import the take, audition it, then replace the range. If lengths differ, confirm trimming the excess or leaving a gap. Do not stretch the take or move downstream picture and captions. The original asset remains and replacement is undoable. Detach linked audio first; restore locked, retimed, reversed, or frozen clips before replacing sound. After a disconnect or crash, check recent recordings and recovery, and audition both ends of any recovered file.
+
+Recording requires the user in the desktop UI. There is no `oc audio record` or remote microphone command. Do not use browser scripts, system capture, or internal recording directories to substitute. Read the imported asset with `oc asset list --json` and edit it with semantic commands. For transcription use `oc media transcribe`; for measured voice cleanup see [Voice enhancement](audio-enhance.md). Preserve the original and avoid repeated enhancement. Measure the final mix after adding music.

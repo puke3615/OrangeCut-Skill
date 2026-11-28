@@ -1,36 +1,22 @@
-# HTML Component:编写内置组件表达不了的 DOM
+# Native HTML components
 
-OrangeCut 通过 HyperFrames 渲染,合成在 Chromium 里完成。当文字、贴纸、
-形状和字幕都不够用时——信息卡、表格、内联 SVG 图示、图表类排版、CSS
-动画浮层——`dev.orangecut.html` Component 就是把你自己的 DOM 放上
-时间线的方式。
+Use `dev.orangecut.html` for information cards, tables, inline SVG, charts, and CSS animation that built-in text, shapes, or captions cannot express. OrangeCut compiles these components for HyperFrames/Chromium.
 
-三条入口,按投入从低到高排列:
+## Discover a preset or author your own
 
-- `oc html presets --json`,再 `oc html add --preset <id> --set <slot>=<value>`
-  ——与编辑器组件库里同一套现成组件。从这里开始。
-- `oc html add <fragment.html> --at-frame <frame> --duration-frames <frames>` ——
-  你自己的标记写成文件,解析为下文的类型化子树。
-- 通过 `oc command apply` 提交一个普通的 `component.add` + `clip.add` 批次,
-  用于这次放置需要并入更大的原子编辑或一份 proposal 的场合。
+- Start with `oc html presets --pack cinema --json`, then `oc html add --preset <id> --set <slot>=<value>`. This is the same library as the editor's built-in panel.
+- Filter along two independent dimensions: `--pack` (`cinema`, `editorial`, `kinetic`, `meme`, `utility`) and `--category` (`opening`, `evidence`, `data`, `narrative`, `callout`, `transition`, `meme`). Combine filters: `oc html presets --pack cinema --category data --json`. Get only short summaries and default durations; then use `oc html presets <id> --json` to inspect slots, CSS theme variables, and `sfxCues` for one candidate.
+- Prefer `cinema-*` for common use cases. Hand-authored HTML remains fully supported: `oc html add <fragment.html> --at-frame <frame> --duration-frames <frames>`; presets are optional. For a custom atomic batch, use `oc command apply` with `component.add` and `clip.add`.
+- CinemaKit includes SFX in the same batch. `--sfx none` mutes all cues; `--sfx <id>` replaces only the first cue.
 
-## 跨画布的尺寸
+## Responsive sizing
 
-要在画布切换后仍然成立的 preset,会在自己的根节点上声明
-`container-type: size`,内部一切尺寸都用容器查询单位:字号用 `cqmin`,
-留白用 `cqw`。`cqmin` 让字号在 1080x1920 与 1920x1080 下完全一致,在 4K
-下翻倍——这是固定 `px` 做不到、`vw`/`vh` 会做错的事:编辑器把预览画在
-一个缩放过的面板里,视口单位会与导出结果不一致。
+- Opt into the new overlays with `oc html presets --pack atmosphere --category lighting --json` (or `texture` / `transition`), `--pack kinetic --category opening`, or `--pack editorial --category opening|callout|narrative` (choose one category). Unfiltered discovery omits these additions. Inspect an ID for the exact slot and `variables[].parameter` names, numeric bounds, and enum values. For example, `oc html add --preset atmo-spotlight --at-frame 0 --set centerX=55 --set warmth=warm --json`.
+- Use `atmo-*` for lighting and texture, `hook-*` for standalone or interleaved type, and `editorial-framed-stage` as a backplate for a separate media layer. A layer sandwich can use `oc media matte <source> --output <clip.webm> --outline-width 6 --outline-color '#FFFFFF' --json` above the graphics. `hook-giant-backdrop` is silent by default; opt in with `--sfx cinema-boom-soft`.
 
-容器单位只能出现在声明了 `container-type` 的元素的**后代**上。Component
-的根节点就是 Clip 自己的节点,写在根上的单位会按视口而不是 Clip 盒子
-解析。把内容包进一层内部元素,尺寸定在那一层。
+Set `container-type: size` on the root. Use `cqmin` for type and `cqw` for width-relative spacing, so portrait, landscape, and 4K scale proportionally. Use container units on descendants, not on the container itself. Fixed `px` does not scale; `vw`/`vh` can diverge between the downscaled preview and export. Fill the clip root with `width` / `height` at `100%`, with layout on an inner wrapper. Animate `transform` and `opacity` on descendants; the Clip owns both on the root.
 
-也不要在根元素上做 `transform` 或 `opacity` 动画:这两项属于 Clip 本身,
-Component 若对它们做动画,会覆盖而不是叠加 Clip 的运动。动画放在内部
-元素上。
-
-## 数据形态
+## Data shape
 
 ```json
 {
@@ -44,35 +30,22 @@ Component 若对它们做动画,会覆盖而不是叠加 Clip 的运动。动画
 }
 ```
 
-`root` 是一棵**类型化节点子树**,不是标记字符串。每个节点接受:
+`root` is a typed subtree, not a string of markup. The Clip owns the root's timing, track, and transform.
 
-| 字段 | 含义 |
+| Field | Meaning |
 |---|---|
-| `tag` | 元素名,取自下文的允许列表 |
-| `namespace` | `html`(默认)或 `svg` |
-| `text` | 文本内容 |
-| `classes` | 类名,用来挂接样式表 |
-| `attributes` | 普通属性,如 `viewBox`、`role`、`aria-*` |
-| `styles` | 内联 CSS 声明,以映射形式给出 |
-| `assetId` | 支撑 `img` / `video` / `audio` / `source` / `use` 的 Project Asset |
-| `children` | 嵌套子节点 |
+| `tag` | Allowed element name (see list below) |
+| `namespace` | `html` (default) or `svg` |
+| `text` | Text content |
+| `classes` | Named CSS hooks |
+| `attributes` | Ordinary attributes such as `viewBox`, `role`, `aria-*` |
+| `styles` | Inline CSS declarations as a map |
+| `assetId` | Project Asset for `img`, `video`, `audio`, `source`, or `use` |
+| `children` | Child nodes |
 
-Clip 自己的元素会成为这棵子树的根,所以时间、轨道与变换照常来自 Clip。
-根节点用 `width` / `height` 的 `100%` 定尺寸,布局在其内部展开。
+## Animation and media
 
-## 动画
-
-用**限定作用域的 CSS** 做动画,包括 `@keyframes`。HyperFrames 对 CSS
-动画做逐帧精确 seek,关键帧动画每次渲染的结果完全一致。作用域用你写进
-`classes` 的类名来限定;样式表会加到整个合成上,前缀要取得有辨识度。
-
-这件事不需要——也不能用——JavaScript。
-
-**非零起点必须补偿动画时钟**：CSS 动画使用合成的全局时间，不会因为 Clip
-在 `atFrame` 才显示就重新开始。编译器在片段根节点注入 `--oc-clip-start`
-（秒），内部动画的 `animation-delay` 必须写成
-`calc(var(--oc-clip-start, 0s) + <局部延迟>)`，不要只写 `0s` 或局部延迟。
-例如片段放在 30fps 的第 150 帧、希望出场后 0.2 秒入场：
+Scope CSS and `@keyframes` to distinctive classes: styles enter the whole composition. No JavaScript. HyperFrames seeks CSS animations frame-accurately. At a nonzero clip start, use `calc(var(--oc-clip-start, 0s) + <local delay>)` for `animation-delay`. Put it after the `animation` shorthand. Use the same expression at frame zero. Example: frame 150 at 30 fps plus .2 s gives a 5.2 s global delay; omitting the clip start can make the animation finish before the clip appears.
 
 ```css
 .quote-body {
@@ -81,51 +54,43 @@ Clip 自己的元素会成为这棵子树的根,所以时间、轨道与变换�
 }
 ```
 
-这里实际延迟为 5.2 秒；若漏掉 Clip 起点，0.8 秒动画在片段显示前已经播完。
-`animation-delay` 写在 `animation` 简写之后，避免被简写重置。起点为零也沿用
-同一写法。本文示例的所有动画都遵循此规则。
-
-## 引用媒体
-
-永远不要写 `src`。把 Project Asset 的 ID 放进 `assetId`;编译器会经授权
-注册表解析它,并在渲染时重新校验指纹。裸 URL 根本取不到:合成运行在
-`default-src 'none'; connect-src 'none'` 之下。
+Use `assetId`, never `src`. Authorized local assets are resolved by the compiler and fingerprinted again at render. No remote URL: `default-src 'none'; connect-src 'none'`.
 
 ```json
 { "tag": "img", "assetId": "asset-logo", "styles": { "width": "120px" } }
 ```
 
-## 什么会被拒,为什么
+## Rejected constructs
 
-下列内容会让批次以结构化错误失败,而不是渲染出与你要求不同的东西:
+A rejection is a structured batch failure, not a silent fallback.
 
-| 被拒项 | 原因 |
+| Rejected | Reason |
 |---|---|
-| `script`、`iframe`、`object`、`embed`、`form`、`a`、`canvas`、`template` | 能执行、导航或嵌入外来文档 |
-| `on*` 属性 | 事件处理器只是换了个写法的脚本 |
-| `id`、`class`、`style`、`src`、`data-start`、`data-hf-*`、`data-oc-*` | 归编译器所有;改用专用字段 |
-| CSS 里的 `url(...)`、`@import` | 会触达授权 Asset 注册表之外 |
-| 内联样式值里的 `;` | 会终止当前声明并另起一条 |
-| `javascript:`、`vbscript:`、`data:text/html` 值 | 可执行载荷 |
-| 没有 `assetId` 的 `img` / `video` / `audio` | 将不得不凭空发明一个来源 |
+| `script`, `iframe`, `object`, `embed`, `form`, `a`, `canvas`, `template` | Execution, navigation or embeds |
+| `on*` | Event handlers |
+| `id`, `class`, `style`, `src`, `data-start`, `data-hf-*`, `data-oc-*` | Compiler-owned; use typed fields |
+| CSS `url(...)`, `@import` | Bypasses the authorized asset registry |
+| `;` in inline style values | Starts another declaration |
+| `javascript:`, `vbscript:`, `data:text/html` | Executable content |
+| `img` / `video` / `audio` without `assetId` | No authorized source |
 
-边界:512 个节点、32 层深、单个文本节点 64 KiB、样式表 128 KiB。
+Limits: 512 nodes, 32 levels, 64 KiB per text node, and 128 KiB per stylesheet.
 
-## 允许的标签
+## Allowed tags
 
-结构与文本:`div span p section article header footer main aside nav
+Structure and text: `div span p section article header footer main aside nav
 h1..h6 ul ol li dl dt dd blockquote figure figcaption hr br pre code em strong
 b i u s small sub sup mark time abbr table thead tbody tfoot tr th td caption
 colgroup col ruby rt rp bdi bdo wbr`
 
-Project 媒体:`img video audio picture source`
+Project media: `img video audio picture source`
 
-内联矢量:`svg g path rect circle ellipse line polyline polygon text tspan
+Inline SVG: `svg g path rect circle ellipse line polyline polygon text tspan
 defs linearGradient radialGradient stop clipPath mask filter feGaussianBlur
 feOffset feBlend feColorMatrix feComposite feMerge feMergeNode use symbol marker
 pattern foreignObject`
 
-## 完整示例
+## Full example
 
 ```bash
 cat <<'JSON' | oc command apply --stdin
@@ -150,7 +115,7 @@ cat <<'JSON' | oc command apply --stdin
                           "align-items": "center", "justify-content": "center" },
               "children": [
                 { "tag": "blockquote", "classes": ["quote-body"],
-                  "text": "先把风险讲清楚，再谈收益。",
+                  "text": "Explain the risks before the benefits.",
                   "styles": { "color": "#f5f5f7", "font-size": "72px",
                               "max-width": "80%", "text-align": "center" } }
               ]
@@ -181,11 +146,4 @@ cat <<'JSON' | oc command apply --stdin
 JSON
 ```
 
-组批次之前,先从 `oc capabilities --json` 读取准确的命令类型名与 payload
-形态;不要从本页复制 revision 号或 ID。
-
-## 应用前先审阅
-
-本页的一切同样可以走 `oc proposal create`——在用户没有要求改动立即落地
-时,这是更安全的默认。Desktop 时间线随后会把这张卡显示为待定项,用户
-可以预览后接受或拒绝。
+Discover exact command types and payload schemas with `oc capabilities --json`. Read the live revision and IDs before building the batch. Use `oc proposal create` for review-first requests: only the user accepts or rejects the card in Desktop.

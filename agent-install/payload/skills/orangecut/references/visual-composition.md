@@ -1,92 +1,106 @@
-# 精密文字与通用画面编排
+# Text and visual composition tools
 
-这些能力复用视觉操作，不绑定账号或某一期内容。临时流程图、设备状态卡等仍在作品内写 HTML，不自动加入产品预设。
+These are reusable controls, not account- or episode-specific presets. Create one-off flowcharts, device status cards, and other bespoke visuals for the Project rather than adding them to the preset catalog.
 
-## 通用视觉工具
+## Visual tools
 
-Desktop：组件 → 局部放大窗 / 前后对照 / 桌面窗口 / 分层排版 / 描绘批注；添加后在检查器重开调整。
-Agent：导入素材，再 `oc html visual <magnify|wipe|window|layers|markup> <config.json> --json`。
-每项都是可编辑的 HTML 组件，经同一 Core 事务添加；支持 dry-run、base-revision、idempotency-key 与 undo/redo。
+In Desktop, use the Component tools for magnify, wipe, window, layers, or markup. From an Agent, import the source first, then run `oc html visual <magnify|wipe|window|layers|markup> <config.json> --json`. Each tool creates an editable HTML component via Core and supports dry runs, revision guards, idempotency, and undo/redo.
 
-共同字段：`assetId`、`durationFrames`，可选 `startFrame`、`sourceStartFrame`（默认 0）、`color`（默认 #F28C28）。
-帧数以序列帧率解释。图片源入点为 0，无 Probe 的图片需传 `sourceWidth/sourceHeight`。
-视频静音，原声另放音轨。源完整等比显示，不将手机录屏拉宽。
+Common fields: `assetId`, `durationFrames`, optional `startFrame`, `sourceStartFrame` (default 0), and `color` (default `#F28C28`). Frames use the Sequence frame rate. For stills, use source frame 0 and provide `sourceWidth/sourceHeight` if probe dimensions are unavailable. Components are silent; keep original audio on its own track. The source keeps its aspect ratio.
 
 ```json
 {"kind":"magnify","assetId":"<source>","durationFrames":150,"box":[300,400,500,160],"zoom":1.5,"xPercent":72,"yPercent":28}
 ```
 
-`box` 为源像素 x,y,width,height；拖选要看的细节，副窗位置用画布百分比，范围越界会报错。
-`wipe` 另给 `secondAssetId`、`secondStartFrame`，图片可给 `secondWidth/secondHeight`；
-`wipeFrom/wipeTo` 默认 100/0，`wipeStartFrame/wipeEndFrame` 默认 15/75，须留在片段区间内。
-`beforeLabel/afterLabel` 可编辑。请用同视角素材，不自动做图像配准。
-`window` 可给 `title`、`widthPercent`（10–96）、`xPercent/yPercent`；保持源宽高比，背景透明。
-`layers` 给 `alphaAssetId`、`alphaStartFrame`、必要时 `alphaWidth/alphaHeight`、精确 `alphaOffset`；
-用现有 focus-cutout 制备对齐透明素材，检查轮廓后使用。`text`、`textX/textY`（源画面百分比）、`fontSize`（1–20，源画面宽百分比）控制被主体遮挡的文字。
+- `box` uses source-pixel `x, y, width, height`. Choose the detail in source coordinates and place the window in canvas percentages. Out-of-bounds ranges fail.
+- `wipe` uses `secondAssetId`, `secondStartFrame`, and `secondWidth/secondHeight` if needed for a still. `wipeFrom/wipeTo` default to 100/0; `wipeStartFrame/wipeEndFrame` default to 15/75 and must be within the clip. `beforeLabel/afterLabel` are editable. Match the camera angle yourself; the tool does not register the images.
+- `window` supports `title`, `widthPercent` (10–96), and `xPercent/yPercent`. It preserves aspect ratio and uses a transparent background.
+- `layers` uses `alphaAssetId`, `alphaStartFrame`, plus `alphaWidth/alphaHeight` or `alphaOffset` when needed. Align the transparent cutout and inspect its edges. `text`, `textX/textY` (source-relative percentages), and `fontSize` (1–20% of source width) control text behind the subject.
 
 ```json
 {"kind":"markup","assetId":"<source>","durationFrames":150,"showSource":true,"marks":[{"kind":"highlight","box":[300,420,600,64],"points":[],"color":"#F28C28","width":10,"startFrame":12,"drawFrames":20,"endFrame":150}]}
 ```
 
-标记 kind：highlight/underline/circle/box/arrow/pen。box 是源像素区域；arrow/pen 还要至少两个源像素 `points:[[x,y],...]`。
-每条有独立颜色、width 和本地 start/draw/end 帧，绘制后须保留至少一帧；最多 16 条标记，每路径最多 64 点。
-荧光笔宽度由 box 高度决定；其他工具 width 是源像素笔宽。`showSource:false` 只放透明批注层。
-批注固定在素材坐标，不自动跟随滚动、镜头或物体；页面变化应切段。通用分割和左裁仍受嵌套媒体限制。
+`kind` can be `highlight`, `underline`, `circle`, `box`, `arrow`, or `pen`. `box` is in source pixels; arrows and pen strokes need at least two source-pixel points (`points:[[x,y],...]`). Each mark has its own color, width, and clip-local start, draw, and end times. Keep it visible after its draw animation. Use up to 16 marks and up to 64 points per path. Highlight thickness follows the box height; other stroke widths use source pixels. Set `showSource:false` for transparent markup only.
 
-## 文字贴纸
+Marks stay fixed in source coordinates: they do not track scrolling, camera motion, or objects. Make separate clips when the page changes. Embedded media still limits splitting and left trims.
 
-先 `oc sticker presets --json` 核对当前安装目录。新增 `cinema_clean`（极简标题）、`tech_label`（精密标识）、`editorial_note`（说明文字），默认常规字重、无描边。
-`--enter` / `--exit` 可独立选择 `soft_rise`、`mask_reveal`、`focus`；`--letter-spacing` 使用画布像素，`--line-height-percent` 为 80–250，0 恢复自动行高。
-新预设按帧率计算入退场长度；未手动指定时长时，短片段会按比例缩短动效并保留至少一帧静止画面。显式时长不自动改写，过短区间会报错。旧预设保持原帧数。
-换预设默认保留原位置和动效；要采用新的动画应同时传相应参数或明确重置。
+## Text stickers
 
-## 对象标注与录屏后期
+Run `oc sticker presets --json` to inspect installed presets. `cinema_clean` suits short titles, `tech_label` suits precise labels, and `editorial_note` suits explanatory text. They default to regular weight without a background plate. Select `--enter` and `--exit` independently (`soft_rise`, `mask_reveal`, or `focus`). `--letter-spacing` uses pixels; `--line-height-percent` accepts 80–250, or 0 for automatic line height.
 
-Desktop 的「对象标注」可指定目标点、框、引线、文字位置。Agent 继续使用 `oc html add --preset hud-callout` / `hud-target`，不需为某种设备另造组件。
-运动对象接 `oc timeline follow <overlay-clip> --target <video-clip> --box x,y,w,h --at-frame N` 生成可编辑关键帧；结果需抽帧复核，源镜头变速或改区间后需重新核对。
+New presets compute entrance and exit durations from the frame rate. If timing is automatic and the clip is short, the animations shrink proportionally, leaving at least one static frame. Explicit durations are not silently rewritten; they fail if too long. Legacy presets keep their original frame counts. Resetting style preserves placement and motion unless you explicitly change or reset the animation too.
 
-录屏输入是已经录好的视频：`oc html screen <absolute-recording-path> --at-frame 0 --json`。
-Desktop「录屏聚焦」提供源入出点、框景、背景、裁切、手动聚焦和点击标记；CLI 参数以 `oc html screen --help` 为准。
-焦点和点击由作者输入，不是自动识别；原片保持只读。选配原声为独立音轨，后续移动、修剪需分别调整。
-新录屏与双画面片段允许整体移动、从右侧裁短；暂不支持通用切分或从左侧裁切，以免嵌入视频和聚焦动画重新起播。双画面可在窗口检查器改源入点；不同源区间的录屏需重新创建。
+## Object labels and screen recordings
 
-## 设备展示
+In Desktop, Object Marker sets the target point, box, leader, and label position. For Agent edits, use `oc html add --preset hud-callout` or `hud-target` instead of building a separate component for each device. For a moving object, `oc timeline follow <overlay-clip> --target <video-clip> --box x,y,w,h --at-frame N` creates editable keyframes. Review the tracking frame by frame after retiming or realigning the source clip.
 
-`oc html device <config.json> --json` 把已导入录屏嵌入透明手机机身，保留其下的普通视频。
-Desktop：组件 → 设备展示。示例：
+For an existing screen recording, run `oc html screen <absolute-recording-path> --at-frame 0 --json`. The Desktop tool exposes source in-point, frame, background, crop, manual focus, and click markers. See `oc html screen --help` for parameters. Supply the focus and click locations; they are not detected automatically. Source media remains read-only. Original audio can go on an independent track and needs its own move and trim edits.
+
+Screen and dual-view components support moving and right trimming. They do not support splitting or left trimming, which could restart the embedded video or focus animation. Change source in-points in the dual-view inspector; recreate a screen component for a different source section.
+
+## Device mockups
+
+`oc html device <config.json> --json` places an imported recording inside an editable, transparent phone mockup. In Desktop, choose Device Display from the Component tools. Example:
 
 ```json
 {"assetId":"<recording>","durationFrames":180,"startFrame":30,"sourceStartFrame":0,"color":"silver","pose":"front","cutout":"none","xPercent":20,"yPercent":50,"heightPercent":82,"shadow":60}
 ```
 
-`color` 为 silver/black，`pose` 默认 front，left/right 为次级选项；位置与机身高度按画布百分比，阴影 0–100。
-机身与屏幕使用固定 iPhone 14 Pro 比例；源录屏完整等比显示，比例不一致时留边，不会把手机压矮或拉宽。
-开孔默认 none，island 会遮挡顶部内容，需人工检查。组件静音；原声可作为普通音轨独立放置。
-源入点、展示时长以序列帧率解释，不能超出素材。整个设备为一个可编辑组件，可重新打开替换录屏或改外观。
-`--dry-run`、`--base-revision` 与 `--idempotency-key` 同双画面；添加/更新通过 Core 事务并支持撤销。
-已有点击聚焦的录屏包装保持在更多工具，此功能不生成点击提示。
+`color` is `silver` or `black`; `pose` defaults to `front` and can also be `left` or `right`. Position and body height are canvas percentages. Shadow strength is 0–100. The body and screen use the iPhone 14 Pro proportions. Recordings with a different ratio fit without stretching. `cutout` defaults to `none`; check that `island` does not obscure important content. The mockup is silent; add source audio separately if needed.
 
-## 目标聚焦
+Source in-point and duration use the Sequence frame rate and must fit the media. Reopen the component to replace the recording or restyle it. `--dry-run`, `--base-revision`, and `--idempotency-key` use the same Core contract; additions and updates are undoable. Use the screen-recording tools when you need focus or click indicators.
 
-`oc html focus <config.json> --json` 将原画面、背景压暗和保留主体作为一个可编辑片段创建，整批可撤销；`--dry-run` 无写入。Desktop 入口为「目标聚焦」。默认不发光，主体保留原曝光。
+## Target focus
+
+For a visible contour, `oc media matte <source> --output <clip.webm> --outline-width 6 --outline-color '#FFFFFF' --json` adds a soft outline beneath the source alpha. Width is in output pixels (0–32); `0` preserves the original matte. Quote the `#RRGGBB` or `#RRGGBBAA` color. The output is a silent VP9 alpha WebM for either matte quality. Check edges and missing frames first: the outline decorates the existing alpha; it does not improve segmentation. For a layered treatment, place the base media below an `atmo-*` or `hook-*` overlay and the aligned cutout above it. For `editorial-framed-stage`, use a separate masked window above the stage. See [Native HTML components](html-component.md) for preset discovery.
+
+`oc html focus <config.json> --json` adds the source image, dimmed background, and visible subject as an editable, undoable batch. `--dry-run` validates without writing. Example:
 
 ```json
 {"assetId":"<source>","mode":"region","shape":"rect","box":[300,200,400,250],"sourceWidth":1448,"sourceHeight":1086,"startFrame":150,"sourceStartFrame":0,"durationFrames":90,"enterFrames":12,"exitFrames":9,"dimPercent":65,"feather":8,"halo":0}
 ```
 
-`box` 是原素材像素；源画面完整等比放入画布。视频从 `sourceStartFrame` 播放，帧数均按序列帧率。旧图片 Asset 无 Probe 时提供 `sourceWidth/sourceHeight`；不向 Asset 写伪造时长。区域可选 `rect/ellipse`。
+`box` is in source pixels. The complete source fits the canvas without stretching. Video begins at `sourceStartFrame`; frames use Sequence FPS. Supply `sourceWidth/sourceHeight` when probe dimensions are unavailable; never edit Asset probe data. Region shapes are `rect/ellipse`.
 
-对象使用 `mode:object` 和 `alphaAssetId`、`alphaStartFrame`；透明主体必须与原素材尺寸和内容对齐。透明 PNG 没有 Probe 时提供 `alphaWidth/alphaHeight`。主体和原片均静音，原声独立添加一次。
+For object focus, use `mode:object` with `alphaAssetId` and `alphaStartFrame`. Match the cutout's dimensions and content to the original. Supply `alphaWidth/alphaHeight` for a transparent PNG without probe dimensions. Both visual layers are silent; add the original audio once if needed.
 
-视频制备优先用 `--from-time numerator/denominator` 指定精确源秒数。将结果里的 Rational `alphaOffset` 原样放入 focus 配置，透明视频入点为 `alphaStartFrame / sequenceFps + alphaOffset`，防止不同帧率下错一帧。自动对象分割限恒定帧率单镜头；VFR 先规范帧率，或用区域聚焦，不能省略偏移后宣称同步。
+For the video-cutout step, prefer `--from-time numerator/denominator` for an exact in-point. Copy `alphaOffset` from the result into the focus config. The alpha video begins at `alphaStartFrame / sequenceFps + alphaOffset`; omitting the offset can cause a mismatch at different frame rates. Use automatic object segmentation on a single CFR shot. For VFR, normalize to CFR or use region focus.
 
-制备轮廓：`oc media focus-cutout <source> --box x,y,w,h --output <new.png|new.webm> [--from-sec S --duration-sec D] --no-wait --json`。图片输出 PNG，视频输出 WebM；视频须给时长，只处理选定单镜头。需要现有 SAM 2.1 CUDA 插件。返回服务级 `jobId`，用 `oc media task watch/cancel` 观察、取消。此步骤不改 Project；检查 `framesWithoutObject` 和实际 alpha 边缘后，正常 `oc asset import` 再添加聚焦。不把空蒙版或跟踪失败宣称为成功。
+Create the cutout with `oc media focus-cutout <source> --box x,y,w,h --output <new.png|new.webm> [--from-sec S --duration-sec D] --no-wait --json`. Images produce PNG; videos produce WebM. Process only the selected shot. The installed SAM 2.1 CUDA plugin is required. Use the returned service `jobId` with `oc media task watch/cancel`. This step does not change the Project. Check `framesWithoutObject` and the alpha edges before using `oc asset import` and placing the focus component.
 
-新标注使用更粗主线、深色护边和稳定文字底板。已有 HTML 不自动改变；Desktop 标注表单重存或正常组件更新后采用新样式。手机缩小后仍须检查可见性。
+New labels use a thicker main stroke, darker edge, and stable text backing. Existing HTML does not restyle automatically; resave or update the component for the new styling. Check readability at mobile size.
 
-## 双画面配置
+## Presenter picture-in-picture
 
-先导入视频或图片，再执行 `oc html dual <config.json> --json`。示例：
+Import the presenter video, then run `oc html presenter <config.json> --json` (inline JSON also works). `fit` defaults to `cover`. `contain` keeps the full video in large windows; circular corner poses keep `cover`. Override with `--fit {cover,contain}`.
+
+- Poses: `full | center | left | right | br | tr | tl | bl | off`. Full is edge-to-edge with no border/shadow. Window size, corner radius, and `box-shadow` interpolate together; the colored border and shadow return on small poses. `br/tr/tl/bl` are circular corner windows; `off` moves off canvas.
+- Typical sequence: `full` introduction → `br`/`tr` demo → `left`/`center` emphasis → `full` explanation or close.
+
+```json
+{
+  "assetId": "<imported presenter video asset ID>",
+  "startFrame": 0,
+  "sourceStartFrame": 0,
+  "durationFrames": 600,
+  "cues": [
+    {"atFrame":0,"pose":"full"},
+    {"atFrame":90,"pose":"br"},
+    {"atFrame":300,"pose":"left"},
+    {"atFrame":450,"pose":"full"}
+  ]
+}
+```
+
+- All frames use sequence FPS. `startFrame` is timeline placement; `sourceStartFrame` is source in-point. `cues.atFrame` is clip-local, strictly increasing from 0 and less than `durationFrames`.
+- Defaults: `transitionSec: 0.38`, `borderColor: "#fb923c"`, `faceX: 50`, `faceY: 38` (0–100). `dimOnCenter: true` dims only at `center`; full dim opacity is 0.
+- Real pose changes play `wind-swoosh` (sound 11) one frame early at linear gain `0.5`, clamped to frame zero. Repeated poses do not add cues. Use `--sfx none`, `--sfx <id>`, or `--sfx-volume` (0–2). Four cinematic micro-SFX: `cinema-boom-soft` (soft bass landing), `paper-highlight` (paper swipe), `counter-tick-lock` (mechanical counter), and `micro-whoosh` (short air sweep).
+- `includeAudio: true` creates one editable narration track and mutes the video window; set it to `false` for sources without audio. `--dry-run` preflights. The component, narration, and cues are one undoable semantic batch. On uncertainty replay the same request, `--base-revision`, and `--idempotency-key`. Do not write project files. Windows and macOS share the HTML/CSS contract.
+
+## Dual view
+
+Import the videos or stills, then run `oc html dual <config.json> --json`. Example:
 
 ```json
 {
@@ -94,14 +108,12 @@ Desktop：组件 → 设备展示。示例：
   "gapPx": 16,
   "splitPercent": 50,
   "panes": [
-    {"assetId":"<已导入素材A>","sourceStartFrame":30,"startFrame":0,"durationFrames":90,"fit":"contain"},
-    {"assetId":"<已导入素材B>","sourceStartFrame":60,"startFrame":15,"durationFrames":75,"fit":"cover","cropX":65,"cropY":50}
+    {"assetId":"<imported assetA>","sourceStartFrame":30,"startFrame":0,"durationFrames":90,"fit":"contain"},
+    {"assetId":"<imported assetB>","sourceStartFrame":60,"startFrame":15,"durationFrames":75,"fit":"cover","cropX":65,"cropY":50}
   ]
 }
 ```
 
-`horizontal` / `vertical` / `primary` 分别为左右、上下、主副，不推断叙事关系。
-所有帧数以序列帧率解释；两个窗口独立选择源入点和时间线区间。`contain` 完整显示，`cover` 裁切填满，`cropX/cropY` 为 0–100 取景位置。图片源入点为 0。
-每窗可用 `rect:{x,y,width,height}` 覆盖布局，单位为画布像素，须在画布内。
-`audio:true` 将原声作为独立音轨同批添加，默认关闭；无原声的素材不能请求原声。
-`--dry-run` 校验整个批次，不创建窗口。两个窗口同一事务添加和撤销，之后各自可编辑，不烘焙为视频。
+`horizontal`, `vertical`, and `primary` arrange the windows side by side, stacked, or in a primary/secondary layout. Select the layout explicitly; the tool does not infer the narrative relationship. Each window selects its own source in-point and timeline range using the Sequence frame rate. A still starts at 0. `contain` shows the full source; `cover` fills the window by cropping. `cropX/cropY` set the crop anchor (0–100). Override either window with `rect:{x,y,width,height}` in canvas pixels; the rectangle must fit inside the canvas.
+
+`audio:true` adds original sound on a separate track in the same batch; it is off by default. Do not enable it for a silent source. `--dry-run` checks the batch without adding windows. Both windows are created and undone together, remain independently editable, and are not baked into the source video.

@@ -1,13 +1,13 @@
-# ProposedChangeSet 契约
+# ProposedChangeSet Contract
 
-当用户想在任何 Project 变更之前先检视候选编辑时,用 proposal。写一个 UTF-8 JSON 对象,然后调用:
+Use a proposal when the user wants to review candidate edits before changing the project. Supply a UTF-8 JSON object:
 
 ```text
 oc proposal create --file <proposal.json> --json
 oc proposal create --stdin --json
 ```
 
-最小形态:
+Minimum example:
 
 ```json
 {
@@ -45,13 +45,11 @@ oc proposal create --stdin --json
 }
 ```
 
-把示例 id 换成当前 Project 的实体。精确 Rational 值、半开区间、命令名、revision 校验、联动 A/V 原子性与幂等,遵循 [request-contract.md](request-contract.md)。
+Replace example IDs with current project entities. Follow the [request contract](request-contract.md) for exact rationals, half-open ranges, command names, revision checks, atomic linked A/V edits, and idempotency.
 
-规则:
-
-- 一个 item 是人可评审的最小原子选择。联动的画面/音频操作属于同一个 item、同一个 CommandBatch 片段。
-- dependencies 与 conflicts 引用同一 proposal 内的 `itemId` 值。
-- 服务端会用已认证的 Agent 身份覆盖线上传来的 actor。
-- 创建、决定、拒绝、取消、过期或预览 proposal 都不推进 Project revision。
-- 只有人工 GUI 能决定并应用。Agent 可以列出、检视、观察并取消自己的 proposal。
-- `stale` 与 `expired` 一律 fail closed。读取新快照,再创建新的 proposal。
+- Each item is one atomic, independently reviewable choice. Keep linked video and audio changes in the same item and CommandBatch fragment.
+- `dependencies` and `conflictsWith` reference `itemId` values within the same proposal.
+- The service overrides `actor` with the authenticated agent identity.
+- Creating, deciding, rejecting, canceling, expiring, or previewing a proposal does not advance the project revision.
+- Only a human in the GUI can decide and apply. An agent can list, inspect, watch, and cancel its own proposals.
+- Fail closed on `stale` or `expired`. Read a fresh snapshot before creating a new proposal.

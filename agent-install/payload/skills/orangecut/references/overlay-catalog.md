@@ -1,178 +1,66 @@
-## 先决定这条片要多少覆盖层,再动手加
+## Choose the right overlay density
 
-量自六个赛道 21 条高赞对标(短剧、电影解说、旅行、美食、健身、
-数码测评;16k–4.7M 赞,2026 年 8 月)。把这些当作该样本上的观察,
-不是定律——但它们一致到足以改变一条片该怎么下手。
+These observations come from 21 high-engagement examples across six categories: short drama, film commentary, travel, food, fitness, and tech reviews (16k to 4.7M likes, August 2026). Treat the sample as creative guidance, not a causal ranking.
 
-**覆盖层密度与传播量不相关。**该样本里赞数最高的几条——4.7M 的
-旅行 vlog、2.3M 的数码测评、2.2M 的电影解说、2.0M 的 AI 短剧——
-有三条几乎只有字幕。一条 2.0M 的短剧全程只有字幕,别无一层。
+- **More overlays did not predict reach.** The sample's leaders included a 4.7M-like travel vlog, 2.3M-like tech review, 2.2M-like film commentary, and 2.0M-like AI drama. Three needed little beyond captions; the AI drama used captions only.
+- **Use overlays to deliver information.** Tech reviews and fitness tutorials benefit from charts, labels, and lists when viewers need facts they can use. In narrative formats, favor captions and an occasional card so the visuals stay readable.
+- **Match pacing to the format.** Typical shots in the sample ran 1.8s for food, 2.3s for short drama, about 3.3s for travel, 3.7s for commentary, 6.8s for tech reviews, and about 8.3s for tutorials.
+- **Check framing before reusing a layout.** Fifteen of the 21 examples were 1920 x 1080. Preset sizes use canvas-relative values. Check a frame on the target canvas before committing a layout from a different orientation.
 
-**只有"带走点什么"的内容配得上重覆盖层。**真正倚重图形的两个
-赛道是数码测评和健身教程,而它们共享同一个目的:观众要带走一条
-可用的事实(哪台手机更耐用、这个动作练哪块肌肉)。叙事型赛道——
-短剧、解说、旅行、美食——反而清空画面,因为画面*就是*内容。
-往那些片里加列表和图表不是中性的;它在跟观众来看的东西抢。
+## Charts and persistent labels
 
-所以先定语域:**信息型**(图表、标签、列表配得上位置),或
-**叙事型**(字幕、偶尔一张字卡,其余时候让开)。然后按语域选层。
+- **Charts:** Use `chart-bar` for labeled bars, `chart-inline` for values inside bars, `chart-rank` for numbered rankings, `chart-gradient` for gradient bars, `chart-minimal` for no track or plate, `chart-segment` for battery-style cells, `chart-column` for vertical bars, `chart-neon` for a neon treatment, `chart-diverge` for a shared centerline, and `chart-card` for one card per row. Supply `bars` as a JSON array of `label`, numeric `value`, and optional `unit`: `--set bars='[{"label":"iQOO 13","value":"9.2","unit":"h"},{"label":"Pixel 10","value":"6.4","unit":"h"}]'`. Bar lengths are relative to the maximum, not the sum. For lower-is-better metrics, order rows and label the direction (“Shorter is better”), or convert values to scores first.
+- **Persistent labels:** `tag-bar`, `tag-badge`, `tag-numeral`, `tag-pill`, `tag-outline`, `tag-topbar`, `tag-corner`, `tag-lower`, `tag-note`, and `tag-neon` take `number`, `title`, and optional `note`. Leave `number` blank for an unnumbered label.
+- **Countdown labels:** `tag-countdown` takes `label`, `value` (calculate this before editing), `unit`, and `note`. Blank slots take no space. For daily series, record the target date in the account profile and calculate the value from the publication date. Disable the default entrance sound with `--sfx none` if it would cover the opening narration.
 
-**剪辑节奏也差着一个数量级**——美食约 1.8s 一镜,短剧约 2.3s,
-旅行约 3.3s,解说约 3.7s,测评约 6.8s,教程约 8.3s。按美食 vlog
-节奏剪的教程没法看,反之亦然。
+## Lists and speech bubbles
 
-**这些赛道里横屏是多数**(21 条中 15 条是 1920×1080;只有美食和
-健身偏竖屏)。preset 尺寸按宽度取相对值正是为此——但在把一个
-只在另一个方向见过的布局放进目标画布之前,一定先读一帧再信。
+- **Lists:** `list-numbered` for steps, `list-bullet` for points, `list-check` for checklists, `list-stat` for big numbers with explanations, `list-timeline` for dates, `list-rank` for scores, `list-versus` for two-column comparisons, `list-progress` for percentages, `list-cards` for a wrapping grid, and `list-quote` for ruled text. `list-recap` is a full-frame, centered summary with a high-opacity plate. Use `title`, optional `footer`, and three to six `items` with a `title` each. Keep it on screen long enough to read or capture.
+- **Rows:** The `items` array determines the row count. For example: `oc html add --preset list-rank --set 'title=Where the Money Went' --set 'items=[{"title":"Rent","score":"38%"},{"title":"Food","score":"22%"}]'`. Check each preset's schema: stats use `value` and `title`, timelines use `when` and `title`, comparisons use `left` and `right`, and progress bars use `percent`. Rows animate in individually.
+- **Legibility:** The default dark plate is about 70% opaque. Use `--oc-list-plate`, `--oc-list-pad`, and `--oc-list-radius` to adjust it. `--oc-list-accent` recolors numbers, marks, and bars together.
+- **Bubbles:** `bubble-say` is white with a tail toward the lower left; `bubble-say-right` mirrors it; `bubble-think` is dark with an upward tail; `bubble-shout` is yellow. Set the tail position with `--oc-bubble-tail-at`, and place the box with `--oc-bubble-x` and `--oc-bubble-y`. Point the tail at the actual speaker.
 
+## HUD overlays (`hud-*`)
 
-## 条形图与常驻标签
+Use these to label parts or data in maker videos and reviews. The four presets share enter/exit motion and a default cyan `--oc-hud-color` of `#4DE3FF`. Dimensions are canvas-relative.
 
-**条形图**——同一个组件的十种样子:`chart-bar`(标签、条、数值)、
-`chart-inline`(数值在条内)、`chart-rank`(带编号的排行榜)、
-`chart-gradient`、`chart-minimal`(无轨道、无底板)、`chart-segment`
-(电池格)、`chart-column`(纵向柱)、`chart-neon`、`chart-diverge`
-(自中线向两侧)和 `chart-card`(每条一卡)。
+- `hud-callout`: put the anchor `--oc-hud-x/--oc-hud-y` on the object. The leader runs vertically, then horizontally. `--oc-hud-up` is -1 up or 1 down, and `--oc-hud-side` is 1 right or -1 left. Set the lengths with `--oc-hud-rise`/`--oc-hud-run`. Slots: `title` (small) and `value` (large).
+- `hud-ring`: counter-rotating rings centered on a point. `--oc-hud-size` is the outer diameter. Slot: `label` under the ring.
+- `hud-target`: corner brackets, a scanning line, and a label above the box. Bounds: `--oc-hud-x/y/w/h`. Slots: `label` and `info`.
+- `hud-data`: data rows on a translucent plate, for example `--set items='[{"label":"Fetch latency","value":"11 s"}]'`. Heading slot: `title`.
 
-条目是 `bars` 下的 JSON 数组,各带一个 `label`、一个数值 `value`
-和可选的 `unit`:`--set bars='[{"label":"iQOO 13","value":"9.2",
-"unit":"h"},{"label":"Pixel 10","value":"6.4","unit":"h"}]'`。**条长
-是相对最大值的比例**,这正是让对比可读的东西——若条长是占总和的
-份额,四个相近的数字就成了四根几乎一样的短桩。而条长永远编码
-大小,所以对越小越好的指标(充电时长、重量、价格),要么把行排好
-让标题说"越短越好",要么先换算成好坏值——否则最差的那项反而
-得到最长、最得意的一根条。
+To track an object, place the overlay on a reference frame, then run `oc timeline follow <component clip> --target <shot> --box <object canvas box on the reference frame> --at-frame <reference-frame>`. This adds translation keyframes, not scaling. For changing object size, use `oc shape add rectangle` with `--scale box`. Put the anchor on the object and aim the label toward open space so it does not cover the subject in motion.
 
-**常驻标签**——教程和测评全程钉在屏上的"01 · 动作名称"徽章:
-`tag-bar`、`tag-badge`、`tag-numeral`、
-`tag-pill`、`tag-outline`、`tag-topbar`、`tag-corner`、`tag-lower`、`tag-note`
-和 `tag-neon`。各取 `number`、`title` 和可选的 `note`;`number`
-留空就是纯标签。
-**`tag-countdown` 是计数形态**:`label`(距目标日 / 挑战第)、`value`(数字,
-由你算好传进来)、`unit`(天 / 期)、`note`(系列名或日期),留空的槽不占位。
-日更系列的"距预产期 N 天""第 N 天"都是它——目标日期记在账号档,每条片
-按发布日算一次数字;默认带一声入场音效,起点压着片头旁白时 `--sfx none`。
+## Recreated interfaces (`ui-*`)
 
+Show a chat, comment, search, or notification as a story beat. `--oc-ui-x/--oc-ui-y`, `--oc-ui-width`, and `--oc-ui-size` use canvas-relative values. Place the overlay in open space, away from faces.
 
-## 列表与对话气泡
+- `ui-chat`: `--set title=Casey --set messages='[{"side":"left","text":"Do you have the data?","avatar":"Me"},{"side":"right","text":"Yes, sending it now.","avatar":"C"},{"side":"right","kind":"file","text":"data.zip","meta":"1.2 MB","avatar":"C"}]'`. `side` selects left (other person, white) or right (self, green). Use `kind` of `file` for a file card; omit it for text. `meta` is the card's secondary line, and `avatar` is a short label. Messages appear in order at `--oc-ui-stagger` intervals; leave enough time in the Clip for all rows.
+- `ui-comment`: `avatar`, `nickname`, `text`, `meta` (for time or location), and `likes`.
+- `ui-search`: `query` types in, then the button presses. The default `--oc-ui-type` is 1.4s. `oc` derives `--oc-ui-steps` from the character count of `query` unless explicitly set; it counts letters in English, not words. The built-in `dazi` typing sound (1.3s) starts 0.35s after entry. `oc sfx set <component> --sfx <other-id>` changes that sound without moving the delay or removing the click. For slower typing, extend the sound by adding `oc sfx add dazi --at-frame <frame>`. The built-in `dianji` click plays at the fully pressed frame, 0.6s plus typing duration. `--sfx none` at placement or `oc sfx set <component> --sfx none` afterward removes both sounds.
+- `ui-notify`: a banner that slides down from the top. Slots: `icon`, `app`, `when`, `title`, `text`. Set the icon color with `--oc-ui-icon`.
 
-两族组件盖住讲解类视频最倚重的东西。
+These overlays do not occupy the main video track. Chat, comment, and notifications default to a pop sound; search defaults to typing and a click. Use `--sfx none` to opt out.
 
-**列表**——一个组件、十种样子,按 preset id 选:`list-numbered`
-(有序步骤)、`list-bullet`(并列要点)、`list-check`(清单)、
-`list-stat`(大数字配说明)、`list-timeline`(带日期的时间轴)、
-`list-rank`(带分数的排行榜)、`list-versus`(两栏对比)、
-`list-progress`(带标签的百分比条)、`list-cards`(换行网格)和
-`list-quote`(带界线的论点行)。**`list-recap` 是满幅居中的大字打钩总结卡**,
-要点一条条列出来、观众能截图收藏:`title`、`footer`(底部一行小字,留空即无)
-加 `items`(每条 `title`,三到六条最合适);底板比侧栏列表更实,截图要清楚。
-总结要点时用它,不要用三张快闪贴纸——观众收藏的是能截下来的那一屏。
+## Comparison overlays (`compare-*`)
 
-条目是 JSON 数组,所以**行数由你定,不由 preset 定**:`oc html add --preset list-rank --set title=钱花哪了 --set
-items='[{"title":"房租","score":"38%"},{"title":"吃饭","score":"22%"}]'`。每个
-preset 的 `items` 明细写明它要的字段(统计要 `value`+`title`,
-时间轴要 `when`+`title`,对比要 `left`+`right`,百分比条要
-`percent`)。行会自行逐条入场。
+Use these for products, methods, people versus machines, or before/after comparisons. The shared colors are red for A (`--oc-cmp-a`) and blue for B (`--oc-cmp-b`).
 
-每个列表默认坐在一块深色半透明底板上,因为白字压在未知的视频帧
-上,没有底板就是不可读——约 70% 不透明度的底板加白字,是唯一在
-任何背景上都活得下来的组合。`--oc-list-plate`、
-`--oc-list-pad` 和 `--oc-list-radius` 调它;`--oc-list-accent` 把
-数字、记号和条一起换色。
+- `compare-vs`: opposing nameplates slide in; the center title lands with a flash and shake. Slots: `left`, `left-sub`, `right`, `right-sub`, `vs`. Set vertical position with `--oc-cmp-y`. Default sound: impact.
+- `compare-card`: show one side's name and attributes, for example `--set name=Robot --set tag=B --set 'items=[{"label":"Time","value":"11 s"},{"label":"Cost","value":"CNY 20,000"}]'`. Keep A left/red. For B, use `--set=--oc-cmp-x=62cqw --set=--oc-cmp-from=1 --set=--oc-cmp-color=#2F8BFF` for a right-side blue card.
+- `compare-bar`: use a numeric left-side share (`--oc-cmp-share`, for example `--set=--oc-cmp-share=22`). Match the display strings in `left-value`/`right-value` to the share yourself.
+- `compare-countdown`: READY, 3, 2, 1, GO. `--oc-cmp-beat` defaults to 0.6s; GO stays until the end after the five beats. Set the `ready`/`three`/`two`/`one`/`go` slots to customize it. The preset is silent; add cues on beat starts with `oc sfx add` if needed.
+- `compare-result`: reveal the result with a radial burst. Set `text` to the result and `sub` to a short summary, e.g. “Robot arm: 3x faster.”
 
-**对话气泡**——`bubble-say`(白色,尾巴指向左下)、
-`bubble-say-right`(同款镜像,给画面右侧的说话人)、
-`bubble-think`(深色底板,尾巴朝上——内心独白和旁白)和
-`bubble-shout`(黄色,给最响的那一句)。尾巴正是气泡*存在的
-理由*:它把这句话拴到说话人身上,这是纯文字贴纸做不到的。用
-`--oc-bubble-tail-at` 定尾巴在那条边上的位置,用 `--oc-bubble-x` /
-`--oc-bubble-y` 摆盒子。
+A typical sequence is VS opener, two cards or a bar, countdown, test footage, then result. Move nameplates or the comparison bar with `--oc-cmp-y` if they compete with captions.
 
+## Group shots into narrative scenes
 
-## 科技感标注(hud-*)
+OrangeCut does not expose a scene command. For long-form commentary and reference studies, combine these signals to distinguish scene changes from camera cuts:
 
-手搓/测评类片子标部件、标数据、"AI 识别中"的那层科技感包装。四个预设同一套青色
-(`--oc-hud-color`,缺省 `#4DE3FF`)、同一套入场/退场,长度全是画布份额:
+1. **Shots:** Use `oc media shots` to find cut points. A scene boundary must be one of those cuts, never mid-shot.
+2. **Speech:** Use `oc audio speakers` to get the speaker timeline. A speaker change across a cut plus at least about 1.5–2 seconds of silence around it suggests a scene change; use `oc media silence` spans as evidence. If speech continues across the cut, treat it as a camera change within the same scene.
+3. **Picture:** For uncertain cuts with no dialogue or a single speaker, sample a frame on each side and ask `oc media describe` what setting it shows. Compare words, not individual characters, looking for a clear subject or location change. Use `oc media search` vector distance as a cheaper first pass if needed.
+4. **Evidence:** Record the boundary signal and the shots it covers. Do not infer a title or summary at this stage. Keep the evidence traceable to source timecodes for later commentary edits.
 
-- `hud-callout` 引线标注:锚点 `--oc-hud-x/--oc-hud-y` 放在要标的东西上,折线先竖后横
-  引出标签;`--oc-hud-up`(-1 向上 / 1 向下)、`--oc-hud-side`(1 向右 / -1 向左)定方向,
-  `--oc-hud-rise`/`--oc-hud-run` 定两段长度;槽位 `title`(小字)、`value`(大字)。
-- `hud-ring` 扫描圈:几圈反向旋转的环锁在一点(眼睛、按钮、零件),`--oc-hud-size` 是外圈直径,
-  槽位 `label`(圈下方的小字,如 SCANNING)。
-- `hud-target` 识别框:四角括号 + 上下扫的扫描线 + 框上方标签,框是 `--oc-hud-x/y/w/h`,
-  槽位 `label`、`info`(坐标、置信度之类)。
-- `hud-data` 数据卡:半透明面板逐行亮起,`--set items='[{"label":"抓取耗时","value":"11 s"}]'`,
-  标题槽位 `title`。
-
-**要它跟着物体走就接 `oc timeline follow`**:先把锚点/圈心/框画在参考帧上物体所在的位置,
-再 `oc timeline follow <组件 clip> --target <镜头> --box <物体在参考帧上的画布框> --at-frame <参考帧>`,
-跟随写的是平移关键帧,整个组件随物体移动(实测摇镜头里引线标注和识别框横穿大半个画面不丢)。
-组件不随物体缩放——物体大小变化明显时,识别框改用 `oc shape add rectangle` + `--scale box`。
-锚点要落在物体上而不是旁边:标签方向朝画面空的一侧(物体往左跑就让标签朝右),
-否则标签会先于物体出画。
-
-
-## 界面复刻(ui-*)
-
-把"手机屏幕上发生的事"直接画在画面上——跟朋友要东西的聊天、引用一条网友评论、
-"我搜了一下"、收到一条消息。四个预设,位置用 `--oc-ui-x/--oc-ui-y`,大小用 `--oc-ui-width`
-和字号 `--oc-ui-size`,都是画布份额:
-
-- `ui-chat` 聊天对话(微信式):`--set title=小奇 --set messages='[{"side":"left","text":"你那有数据吗","avatar":"我"},{"side":"right","text":"有,我发你","avatar":"奇"},{"side":"right","kind":"file","text":"data.zip","meta":"1.2 MB","avatar":"奇"}]'`。
-  `side` 是 left(对方,白气泡)/ right(自己,绿气泡);`kind` 缺省 text,写 file 变成文件卡片,
-  `meta` 是卡片下面的小字;`avatar` 是头像方块上的一两个字。消息按顺序一条条弹出,间隔
-  `--oc-ui-stagger`(缺省 .7s),窗口跟着长高;Clip 时长至少要盖住「条数 × 间隔」。
-- `ui-comment` 评论卡(抖音深色评论区):槽位 `avatar`(头像上的字)、`nickname`、`text`、
-  `meta`(时间 · 地点)、`likes`(点赞数,心形会跳一下)。
-- `ui-search` 搜索框打字:槽位 `query` 是要打出来的那句话,一个字一个字出现、光标跟在后面,
-  打完按钮按下去;打字用时 `--oc-ui-type`(缺省 1.4s)。字数变量 `--oc-ui-steps` 由 `oc` 按
-  `query` 的字数自动写入,不用自己数;按每字一个中文字宽算,夹很多英文时会提前打完。
-  **默认绑定键盘打字声**(内置 `dazi`,1.3 秒,和缺省打字时长对上):声音不在框弹出时响,而是等
-  0.35 秒、字开始出现时才响;`oc sfx set <组件> --sfx <别的>` 换声音也照样等这 0.35 秒。不要声音就
-  放置时加 `--sfx none`,放完再拿掉用 `oc sfx set <组件> --sfx none`。把 `--oc-ui-type` 调长了
-  声音不会跟着变长,长句慢打时自己在后面补一条 `oc sfx add dazi --at-frame <帧>`。
-  **打完按下搜索那一下默认配鼠标点击声**(内置 `dianji`),落在按钮按到底的那一帧——0.6 秒 + 打字时长,
-  调了 `--oc-ui-type` 点击会跟着挪。`oc sfx set <组件> --sfx <别的>` 只换键盘声、点击声留着;
-  `--sfx none` 或 `oc sfx set <组件> --sfx none` 两声一起去掉。
-- `ui-notify` 通知横幅:从画面顶部滑下来的一条消息通知,槽位 `icon`(图标上的字)、`app`、
-  `when`、`title`、`text`;图标颜色 `--oc-ui-icon`。
-
-都是 overlay,不占时间线;聊天、评论、通知缺省 pop,搜索框缺省键盘打字声 + 按下搜索时的鼠标点击声;任何一个都能 `--sfx none` 去掉。
-这类界面是剧情道具,出现时最好让画面有空的一侧给它(人物在右就放左边),别压在脸上。
-
-
-## 对比包装(compare-*)
-
-两样东西摆在一起比——新旧做法、两款产品、人和机器、改造前后。五个预设共用 A 方红
-(`--oc-cmp-a`)、B 方蓝(`--oc-cmp-b`)两个主色,按一条对比段落的顺序用:
-
-- `compare-vs` 对比开场:两块名牌从左右冲进来,中间 VS 砸下带闪光和一下震屏。槽位 `left`、
-  `left-sub`、`right`、`right-sub`、`vs`(不一定写 VS,也可以写「还是」「对比」);
-  `--oc-cmp-y` 定整组高度。缺省音效 impact。
-- `compare-card` 对比卡:一方的名字 + 几条属性逐行出现,`--set name=机械臂 --set tag=B
-  --set items='[{"label":"耗时","value":"11 秒"},{"label":"成本","value":"2 万"}]'`。两方各放一张:
-  A 方保持缺省(左边、红色);B 方加 `--set=--oc-cmp-x=62cqw --set=--oc-cmp-from=1 --set=--oc-cmp-color=#2F8BFF`,
-  这样卡片从右边滑进来,颜色也换成蓝色。
-- `compare-bar` 对比条:一根两色条从中间按占比推开,两头标名字和数值。`--oc-cmp-share` 是左边
-  (A 方)的占比,只写数字(`--set=--oc-cmp-share=22`),数值槽位 `left-value`/`right-value` 写给
-  人看的字(「3 秒」「62%」),两者自己对上。
-- `compare-countdown` 倒计时:READY、3、2、1、GO 一拍一个(`--oc-cmp-beat`,缺省 .6s;五拍之后
-  GO 停到组件结束)。每拍的字都是槽位 `ready`/`three`/`two`/`one`/`go`,可以改成「预备」「开始」。
-  缺省无声,要踩拍就在每拍起点自己 `oc sfx add`。
-- `compare-result` 结果揭晓:大字连同放射光芒一起炸出来,槽位 `text`(WIN、更快、赢麻了)
-  与 `sub`(一句结论,如「机械臂 快 3 倍」)。
-
-典型顺序是 VS 开场 → 两张对比卡(或一根对比条)→ 倒计时 → 实测画面 → 结果揭晓。名牌
-和对比条都横跨画面中部或下部,和字幕抢位置时把 `--oc-cmp-y` 挪开。
-
-
-## 把镜头聚成叙事场景(配方)
-
-长片解说和对标拆解都需要"这场戏从哪到哪",而镜头边界只是机位变化,不是叙事边界。OC 刻意不做 scene 命令——场景是**多层证据的 join**,材料全在,拼法如下(源自 video-dom 在真实剧集上验证过的判据):
-
-1. **骨架**:`oc media shots` 出全部镜头边界——场景边界**只从镜头边界里选**,绝不落在镜头中间。
-2. **声纹层**:`oc audio speakers` 出说话人时间线。提升一个镜头边界为场景边界的主判据:**跨边界说话人变了,且边界两侧有一段足够长的静默**(≥1.5–2 秒,像换了时间或地点);`oc media silence` 的 spans 可以直接当这个静默证据用。反向规则同样硬:**有人正说着话跨过的剪切只是机位切换**——一场对话不管拍了多少个反打,都是同一场戏。
-3. **画面层(可选,补无对白段)**:没人说话的地方没有声纹证据,静默换场只能靠画面——对边界两侧各抽一帧,`oc media describe` 问"画面里是什么场景",**按词元比对**两侧描述(别按字符,任何两句中文都共享大量单字);描述明显换了主题/地点才算证据。粗筛也可用 `oc media search` 的向量距离代替逐帧问答,省钱一个量级。
-4. **产出与诚实性**:每个场景记下它由哪条证据开界(转场/换人/画面变化),覆盖哪些镜头。**不要给场景起标题或写摘要**——那是编导判断,聚合层只说"这一拍从哪到哪",不说"这一拍讲了什么";把判断留给读证据的人,错了才追得回来。
-
-镜头数上千的长片,先用 2 的规则跑全片(便宜),只对"独白/无对白的存疑边界"补 3(贵)。这套配方产出的场景表,就是解说选段绑定真实时间码的底座。
+For long videos with thousands of shots, run the speech rule over the whole film first. Apply visual checks only to unresolved cuts in monologues or stretches without dialogue.

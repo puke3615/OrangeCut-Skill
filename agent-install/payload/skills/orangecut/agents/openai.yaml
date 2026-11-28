@@ -1,6 +1,6 @@
 interface:
   display_name: "OrangeCut Edit"
-  short_description: "通过本地 oc 命令安全检查并剪辑当前 OrangeCut 项目"
+  short_description: "Inspect and edit OrangeCut projects with the local oc CLI"
   default_prompt: "Use $orangecut to inspect the current OrangeCut timeline and perform the requested semantic edit safely."
 
 policy:

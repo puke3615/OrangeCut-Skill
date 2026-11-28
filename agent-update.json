@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1",
-  "version": "0.1.0",
-  "desktopSha256": "529bf359c53e093bd2f79f2e22ba164b7886ff50331d2bab2329eb53a14f96e9",
+  "version": "0.2.0",
+  "desktopSha256": "10b323a47e27b6603a120a94ac4560e24f86624664239a47bbdb825b6072c06e",
   "files": [
     {
       "path": "agent-install.json",
-      "sha256": "60ae7632cb20aac551fe3b3d429bbe6a7fe911a323087ea8cc9b7a711bb18c80",
+      "sha256": "69a0c5cfd5f098298179557c68e96bb2feb123cf67de4d3a3f1b1b1f37c45d52",
       "sizeBytes": 554
     },
     {
@@ -14,134 +14,139 @@
       "sizeBytes": 66821
     },
     {
-      "path": "payload/cli/orangecut_cli-0.1.0-py3-none-any.whl",
-      "sha256": "c1fcc4600e06f879e599be3c8c3a012f17547d28ddfd7b39161ffcb0dbd9fbe1",
-      "sizeBytes": 258718
+      "path": "payload/cli/orangecut_cli-0.2.0-py3-none-any.whl",
+      "sha256": "39d3b8ca8191e4c652cb4f87227201c14a89c27fe446f8d7f93e7bbc3080f59d",
+      "sizeBytes": 299102
     },
     {
       "path": "payload/manifest.json",
-      "sha256": "b3fcb256a8502c5aab643c28d1abbc30d88d6f38e1a3985f06eb2b5ab09ff232",
-      "sizeBytes": 1156
+      "sha256": "0a24ffe2f6b63044a738a4ed06039b2830c0bdd21dae0788c8d9eac3e76cf3e5",
+      "sizeBytes": 1195
     },
     {
       "path": "payload/skills/orangecut/SKILL.md",
-      "sha256": "9b9439c3e37d611459f0f4ac53782a4d5062bc19c1b9a91ea0d0438fca33510a",
-      "sizeBytes": 10578
+      "sha256": "cf31129be9849bfdeebdffa0eeb92570aac1f5f8c32821277b6c56c3f80670ca",
+      "sizeBytes": 9198
     },
     {
       "path": "payload/skills/orangecut/agents/openai.yaml",
-      "sha256": "b3a28b6d5a68e7312b3219a988837795b62a0a3ff8fddf888f621bf8979424bc",
-      "sizeBytes": 309
+      "sha256": "85010f46a65d364b926793b8360c8cf70ace03e863c7556f71ad07ff9dd61a4e",
+      "sizeBytes": 299
     },
     {
       "path": "payload/skills/orangecut/references/agent-operations.md",
-      "sha256": "668951af8f4cbf3ef045089f962d1bc78aed755a2a0987c1f88b17f719cc3ea5",
-      "sizeBytes": 9117
+      "sha256": "085b737e04c0e26f16357fc1f178afd35d72266a89b0f2b00dc75f3915009a68",
+      "sizeBytes": 9687
     },
     {
       "path": "payload/skills/orangecut/references/audio-enhance.md",
-      "sha256": "b4a20aca3e521b83ab3f2bb4d7546cdf8c84e0b83aa42af203b16ad6fec51b98",
-      "sizeBytes": 5272
+      "sha256": "8511a535d78e8336333c4856434f5b0c8bd260425afcc17555dab36743f0f594",
+      "sizeBytes": 5103
     },
     {
       "path": "payload/skills/orangecut/references/color-grading.md",
-      "sha256": "fe0da94c0597eccea1f84451f85e27bfaf473e4a04056dd685869c5e5a5de86c",
-      "sizeBytes": 3271
+      "sha256": "30a68364553b7ccf1faf4d95f85e0559ea4d3f2e4fb0532bfccd7988d0dd41e0",
+      "sizeBytes": 3000
     },
     {
       "path": "payload/skills/orangecut/references/cutlist.md",
-      "sha256": "028a7af546e308fef0cb2d6e58388113e194089d40d62bc4b45cfbf8a655ce41",
-      "sizeBytes": 2179
+      "sha256": "9049b05d0f8456c05df72c611386c65158f122402cbd8a764a4776f6e4e47445",
+      "sizeBytes": 1889
     },
     {
       "path": "payload/skills/orangecut/references/editing.md",
-      "sha256": "cccde736bb500a41f25b31795b52c8934e6423da29ee3d7768e150f51ea6c7c5",
-      "sizeBytes": 79685
+      "sha256": "26bb5586508272b67544fd27ed766586fd9e7fcfbb955c57f19bdc22081833bc",
+      "sizeBytes": 90805
     },
     {
       "path": "payload/skills/orangecut/references/export-fast-lane.md",
-      "sha256": "99088c7999c2420373f5f0a79ae1418004eb3a6043a7c79592f8d8befb4b9356",
-      "sizeBytes": 6577
+      "sha256": "6032ab2ae41abf048450d6af66cf85d96471c71ffc36a68f86eb7a2c3d7608eb",
+      "sizeBytes": 6199
     },
     {
       "path": "payload/skills/orangecut/references/html-component.md",
-      "sha256": "23c9151f640e08b7a3230efd5fccd6d1d8cee34d14e2a886e27978ae057853ac",
-      "sizeBytes": 8482
+      "sha256": "c64a06308147c2bcce4e4cd0a778d22115020dba00f4b4de752ef6c41144cad8",
+      "sizeBytes": 8162
     },
     {
       "path": "payload/skills/orangecut/references/jobs.md",
-      "sha256": "5a561ef633596e46bddf957cace911bd4e41eebecf3498d5329324ccfa32504c",
-      "sizeBytes": 3646
+      "sha256": "a25b24825b7295b94d46661cb5b2849f7130065faf92379d9e8925824ea806cf",
+      "sizeBytes": 2962
     },
     {
       "path": "payload/skills/orangecut/references/layout-check.md",
-      "sha256": "281e9499b66e37c015f46977dfc3a616dc764952c2b0c22c29f739c83a7fab86",
-      "sizeBytes": 4145
+      "sha256": "5e1986a7611f356729fae3dfb33409abdb18fcac3d73741e02e061f6c9f815b6",
+      "sizeBytes": 3290
     },
     {
       "path": "payload/skills/orangecut/references/marker-sound.md",
-      "sha256": "2e318d6e2ba71440bae657e939dbe3318d542045c2dda9cb013786a9e49dfe07",
-      "sizeBytes": 1082
+      "sha256": "8e625e54cc7da99dd5f4c8c329102c78ebe5553e36ecb15bded38819d48ad3c0",
+      "sizeBytes": 1087
     },
     {
       "path": "payload/skills/orangecut/references/markers.md",
-      "sha256": "dffbaf63397ec1646f50c904fc8edc53fcfbe422a9f68bae9a85be2aa91e5dd2",
-      "sizeBytes": 1149
+      "sha256": "48a2d0f53c1ed026ffd72f3e09bee656ed075ae57a116799443241f7c88627eb",
+      "sizeBytes": 901
     },
     {
       "path": "payload/skills/orangecut/references/overlay-catalog.md",
-      "sha256": "a49ab9b2b15fdadf724ef3c0c260c21172b04bf0c1810269a335eefa32501be3",
-      "sizeBytes": 13598
+      "sha256": "766e4be8a44ba52633c4c269c08c09148a7d7e830ee7dccc9c4b79615961ee40",
+      "sizeBytes": 10094
     },
     {
       "path": "payload/skills/orangecut/references/plugin-catalog.md",
-      "sha256": "c9bd6adaa4f1e6a625fae69d4e33d712d1ba2a020acb551be48b734dc5c44a7e",
-      "sizeBytes": 15842
+      "sha256": "987ce37ecbdf947ae0ca88c4aa47b64d1cd6b29c48aba3c328e1a8d8411bfdbe",
+      "sizeBytes": 12236
     },
     {
       "path": "payload/skills/orangecut/references/project-lifecycle.md",
-      "sha256": "ca08ecab61c97e69d9688868fd09a7777713d023b2dde0eb448303cef92cd02f",
-      "sizeBytes": 2435
+      "sha256": "33ff9ab36b6830a336306643515f033e5a0c3b5adaf884f273970c85ca6d609f",
+      "sizeBytes": 2277
     },
     {
       "path": "payload/skills/orangecut/references/project-source.md",
-      "sha256": "fecb48283150e1aa925adbe4980503fccf0f44013cfb92d7480c6e588fb00cd0",
-      "sizeBytes": 2269
+      "sha256": "8195f347de2951627db77384c0ac39c71c40ab13c25a1f128446cd8255ebbbb7",
+      "sizeBytes": 1827
     },
     {
       "path": "payload/skills/orangecut/references/proposal-contract.md",
-      "sha256": "8af6c2f97f8ed5af88d910510b750a89c15018b1dd97374c772d6f1f0bd5bba2",
-      "sizeBytes": 2044
+      "sha256": "a31d6c8ce3e45ef13262ba727c7e480b77da539daf50a431962a9b9c12eb8bf2",
+      "sizeBytes": 2075
     },
     {
       "path": "payload/skills/orangecut/references/recording.md",
-      "sha256": "c76e5d36104aafdc63f7b0257a59922a26af5152aa4bba71e1f9f19bcaf40901",
-      "sizeBytes": 1745
+      "sha256": "b9049aa403302cd793709652a17b3bd7bf46366ce0ffe66e29e5511c6a1fd202",
+      "sizeBytes": 1901
     },
     {
       "path": "payload/skills/orangecut/references/request-contract.md",
-      "sha256": "48a5eacc05f441999dc23a7bd2d1e0e9e879dee7f66d8d849c837dedfb2ab7a1",
-      "sizeBytes": 2738
+      "sha256": "0abb8037ef8d096506c63c08c44e55e90d355604e0c921ab8f24dc8f3c17c4d5",
+      "sizeBytes": 2613
     },
     {
       "path": "payload/skills/orangecut/references/review.md",
-      "sha256": "75e3045ae9083937a34eea210c27532f197396a17075a693e15b8fa3cc2f56c7",
-      "sizeBytes": 3327
+      "sha256": "53c857f119a106d28e7ccb7f774c6a5ba04403504225ab9bc5fdd797e2a2799f",
+      "sizeBytes": 2732
+    },
+    {
+      "path": "payload/skills/orangecut/references/scenarios/talking-head.md",
+      "sha256": "79be5896a661eedd3ec466387c3a6f502ba988296d35f4fe139131ac30e75f44",
+      "sizeBytes": 13949
     },
     {
       "path": "payload/skills/orangecut/references/troubleshooting.md",
-      "sha256": "8edd101e7aeb03608f4f081c4b03c3f9309c089399f11ce328dce1e19a2da24d",
-      "sizeBytes": 7526
+      "sha256": "a80c3fdbb5bd9a68efb04edb4778e54ca1fe69af8bae2835593e977f7e894657",
+      "sizeBytes": 6343
     },
     {
       "path": "payload/skills/orangecut/references/visual-composition.md",
-      "sha256": "b58063cd82d28ff9a285e815e854561acc1e185743c3d36ebb8da98d798a8b7e",
-      "sizeBytes": 8849
+      "sha256": "7595d7ebc6cc7ec32faecbed2b4b37ea2607b2b5a86d56672fdbd91df40d887f",
+      "sizeBytes": 12409
     },
     {
       "path": "payload/skills/orangecut/references/visual-consistency.md",
-      "sha256": "5722b2760d53dc937fd5322cd21c982897ee2ff3a1c0d5cdc9d50e96c402a853",
-      "sizeBytes": 4130
+      "sha256": "f5ac57aba82a5686ae4db882e2cf01d7635bf9fe49dd64ca5d23aced00eb3a36",
+      "sizeBytes": 4380
     },
     {
       "path": "run_orangecut_agent_bundle_installer.py",

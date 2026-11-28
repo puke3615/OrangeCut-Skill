@@ -1,26 +1,23 @@
-# 定点查询、复合编辑、版本与核验
+# Inspect, edit, fork, and verify projects
 
-这些入口只接收明确编辑意图。素材选择、自然语言理解和审美判断仍由上层 Agent 完成。
-先 `oc <group> <action> --help` 查参数；`oc capabilities --command timeline.edit --json` 返回该入口的准确请求 schema，
-也支持 `timeline.inspect`、`project.fork`、`project.diff` 和原始语义命令名（例如 `clip.add`）。
+For a split-screen package, use `oc sequence list`, `oc sequence create`, and `oc timeline add-sequence` instead of intermediate exports. You can reuse the same inner edit in two outer windows with independent transforms and `--muted` on the comparison window. After an inner edit, re-read the outer sequence at the new Project revision; verify picture and listen to the mix before final export. Do not build cross-Project references, cycles, or more than four nested edges. For retryable writes pass the original `--base-revision` and `--idempotency-key` together. See [editing.md](editing.md) for the two frame grids.
 
-## 只读相关对象
+These commands take explicit editorial intent. The Agent still chooses material and makes editorial decisions. Check parameters with `oc <group> <action> --help`. For exact request shapes, use `oc capabilities --command timeline.edit --json`; it also supports `timeline.inspect`, `project.fork`, `project.diff`, and semantic command names such as `clip.add`.
+
+## Inspect only the relevant entities
 
 ```text
-oc timeline inspect --text "需要修改的字幕文字" --kind caption --json
+oc timeline inspect --text "caption to edit" --kind caption --json
 oc timeline inspect --id clip-a --id clip-b --json
 oc timeline inspect --from-frame 300 --to-frame 600 --json
 oc timeline inspect --external-ref "shot:opening" --full --json
 ```
 
-响应包含 `projectId`、`revision`、精确范围、源区间、关联音画 ID；`--full` 才返回实体全部字段。
-`projection` 明确指出摘要省略项及依赖未包含。完整实体仍不等于完整组件、字体或派生素材依赖，复杂修改需继续读取依赖；不能用摘要替换原实体。
-默认上限200，最大1000，超过返回错误，绝不冒充已经读取全部。范围为半开区间且不裁短查询结果。
-文本匹配只查询素材名称和字幕文字，不做语义搜索。使用外部引用时先从查询结果确认唯一实体；不要猜 ID。
+Results include `projectId`, `revision`, exact timeline and source ranges, and linked A/V IDs. `--full` returns all entity fields, not all referenced components, fonts, or derived media. Read `projection` for omitted fields and fetch dependencies separately for complex changes. The default result cap is 200, maximum 1000; an oversized result fails rather than silently truncating. Ranges are half-open. Text matches asset names and caption text, not meaning. Resolve external references to a unique entity; never guess an ID.
 
-## 一个计划，一个撤销单元
+## Plan one atomic, undoable edit
 
-将明确操作写入 UTF-8 JSON，再执行：
+Write the plan as UTF-8 JSON. Dry-run and commit the same request:
 
 ```text
 oc timeline edit --file <plan.json> --dry-run --json
@@ -39,50 +36,25 @@ oc timeline edit --file <plan.json> --json
 }
 ```
 
-从真实查询填入 ID 和 revision。预检与正式提交使用同一份文件；结果不确定时也重试这份文件。
-计划绑定完整输入及约束，不能在同一 key 下修改参数。过期 revision 明确失败，不自动套到新状态。
-响应包含正式 `transaction` 和简明 `summary`；检查 `committed` 与新 revision，再按需要预览。
+Use IDs and `baseRevision` from inspection. Retry exactly the same document after an uncertain outcome; the key binds the entire plan. A stale revision fails without rebasing. Inspect `transaction`, `summary`, and `committed`, then reread at the new revision and preview the affected edit.
 
-### 操作
+### Operations
 
-- `replace-source`：匹配媒体种类，保留片段 ID、变换、效果与音画关联；`sourceStart` 为精确 Rational，默认0。
-  `timing: preserve` 保持原时间槽和速度；`fit` 将剩余新素材适配原槽，明确会改变速度；
-  `resize` 按新素材可用时长和原速度调整本片段尾部，不移动后续内容，可给 `durationFrames`；
-  `ripple` 必须给 `durationFrames`，同时调整后续内容。源不够、发生重叠或无法保留效果时失败。
-- `replace-narration`：输入独立音频 `clipId`、新 `assetId`、`captionTrackId`、要替换的 `captionIds` 与 `captions`。
-  每条新 cue 是 `{text, sourceRange, tokens?}`，时间位于新录音的源时间轴；服务按起点、播放速度映射到时间线。
-  一对一或文字唯一对应时继承原字幕的样式、说话人、强调色、动画及扩展；可用 `inheritFrom` 明确对应的旧字幕ID。
-  多条字幕样式不同、强调词已不在新文本中、带动画但时长改变时，服务拒绝不明确的继承。
-  可为cue提供完整 `presentation: {speaker, styleRef, emphases, motion, extensions}` 明确替换这些字段（可空字段填null；空数组/对象表示明确清除），不与inheritFrom同时使用。
-  操作级 `styleRef` 可显式覆盖样式。其他字幕不变。timing 与 replace-source 相同，可用 `atFrame` 同时调整新旁白和字幕起点（不与 ripple 同用）。
-- `audio-envelope`：`clipId` 指向声音片段，`points` 为 `[["局部时间分子/分母","线性增益分子/分母"], ...]`，时间严格递增且位于片段内。
-  `interpolation` 默认 linear，也可 hold。只替换 gain 曲线，保留原 mix 的 pan、fade 等参数；无 mix 时创建一项。
-  例如 `[["0/1","1/2"],["1/1","1/1"]]` 在第0秒半增益、第1秒原增益。输入使用精确分数字符串，项目真值仍为规范 Rational。
-- `insert`：输入 `assetId`、明确的 `trackId`、`atFrame`、`durationFrames`，可给 `sourceStart`、`muted`。
-  服务先在候选状态切分横跨位置的片段，再打开全轨空隙并放入素材，视频原声按规范联动。
-  横跨位置的字幕、锁轨或不支持的映射会阻止整次修改，不会留下半次插入。
-- `copy-range`：同一工程内给 `fromFrame`、`toFrame`、`atFrame`，可选 `trackIds` 与 `ripple`。
-  复制所选轨道内片段和字幕，保留源区间、样式及关联关系；音画两端必须同时包含。组件和字幕样式创建独立副本，动画关键帧分配新身份。
-  线性素材片段的部分区间通过 Core 修剪候选生成副本，源工程不被裁剪；字幕边界需完整。
-  增益曲线按原片段的局部时间精确插值、截取并重定位，音频gain允许恰好位于副本终点的控制点，媒体区间仍为半开区间。
-  若边界切入淡入/淡出或其他效果的局部关键帧无法等价保留，会明确拒绝；不近似重建效果。
-  不支持的部分组件/变速映射和区间外转场依赖会明确失败。素材引用来自本工程，不在此入口自动跨工程导入。
-- `external-ref`：`{op:"external-ref", id:"clip-a", value:"shot:opening"}` 设置通用稳定外部引用；单个 Sequence 内不能重名。
-  引用用于连接上层镜头或脚本，不放路径、token、账号专用字段；复制时不沿用唯一引用。
-- `commands`：仅在高层操作不足时提供既有强类型 `commands` 数组，可与其他操作放在同一计划中，共用预检、约束与撤销。
+- `replace-source`: Match media kinds and retain clip ID, transform, effects, and linked A/V. `sourceStart` is an exact rational and defaults to zero. `timing: preserve` keeps slot and speed; `fit` resizes playback speed to fill the slot; `resize` adjusts the tail at the original rate without moving later content and accepts `durationFrames`; `ripple` requires `durationFrames` and moves later content. Insufficient source, overlaps, and effects that cannot be retained fail explicitly.
+- `replace-narration`: Supply standalone audio `clipId`, new `assetId`, `captionTrackId`, `captionIds`, and `captions`. Each new cue is `{text, sourceRange, tokens?}` in the new recording's source time. The service maps it to the timeline using the source in-point and playback rate. Style, speaker, emphases, motion, and extensions inherit only when the match is unambiguous; use `inheritFrom` to name a specific old cue. The service rejects ambiguous styles, missing emphasized words, and incompatible animation retiming. Use `presentation: {speaker, styleRef, emphases, motion, extensions}` to replace presentation explicitly (null for nullable fields, empty arrays/objects to clear), not with `inheritFrom`. An operation-level `styleRef` overrides style; other captions are unchanged. Timing matches replace-source, with optional `atFrame` to move narration and captions together, not with `ripple`.
+- `audio-envelope`: Supply audio `clipId` and strictly increasing `points` within the clip as `[local-time-rational, linear-gain-rational]` pairs. For example, `[["0/1","1/2"],["1/1","1/1"]]` goes from half gain at 0 s to unity at 1 s. `interpolation` defaults to `linear` and also accepts `hold`. Only the gain curve is replaced; existing pan and fades are retained, or a mix is created if absent.
+- `insert`: Supply `assetId`, `trackId`, `atFrame`, and `durationFrames`, optionally `sourceStart` and `muted`. In the candidate state, the service splits crossing clips, opens a gap across all tracks, and inserts the asset with native linked sound. A crossing caption, locked track, or unsupported time mapping rejects the entire edit.
+- `copy-range`: Supply `fromFrame`, `toFrame`, and `atFrame` in the same project, optionally `trackIds` and `ripple`. Preserves source ranges, styles, and A/V pairing; select both sides of linked A/V. Component and caption styles are copied and animation keys get new IDs. The service trims copies of linear clips without trimming originals; captions must be fully inside the range. Gain envelopes are interpolated and shifted exactly, including a possible point at the exclusive media endpoint. Reject partial fades or other effects that cannot be preserved, partial components, unsupported retiming, and transitions that depend on clips outside the range. No cross-project asset import.
+- `external-ref`: `{op:"external-ref", id:"clip-a", value:"shot:opening"}` sets a stable external reference, unique in its Sequence. Use it to link to a shot or a script, not paths, secrets, or account-specific fields. Copies do not inherit the unique reference.
+- `commands`: When the high-level operations are insufficient, supply the typed `commands` array in the same plan. Dry-run, constraints, and undo cover the entire batch.
 
-复杂速度映射、派生蒙版/脱敏与不兼容音画需要先确认支持范围；不要借此接口删除效果来换取成功。
-换源同时检查音画双方的效果；已有增强音频、retime、蒙版、脱敏等源依赖处理时拒绝复用旧派生结果，需要通过相应处理入口明确重建。
+Check support before editing complex retiming, derived masks, privacy effects, or incompatible linked A/V. Do not remove effects just to make the request succeed. Source replacement checks both sides of linked A/V. It will not reuse source-dependent enhancements, retimes, masks, or privacy derivatives; rebuild them through their supported commands.
 
-### 明确约束
+### Constrain the edit
 
-`constraints.duration` 固定所选 Sequence 的精确总时长；`unchangedIds` 指定必须保持的已有实体；
-`allowedChangedIds` 限定全部可变 ID（包括新增、移除、时长变化涉及的 Sequence 等）。
-先预检取得生成的 ID，再增加范围约束；添加约束不改变生成 ID，但正式请求必须使用新的 key，不能复用已提交 key。
-约束在候选状态上检查；失败零写入。相同媒体指纹的比较归一化不会放宽这些严格的对象约束。
-片段/字幕在轨道内的顺序也属于比较和约束；回执的fieldChanges提供JSON路径及前后值，大字段显示摘要并标记省略，需读取完整实体核验。
+`constraints.duration` fixes the exact Sequence duration. `unchangedIds` protects existing entities. `allowedChangedIds` limits all modifications, including creates, deletes, and Sequence duration changes. Dry-run to get generated IDs before adding scope constraints. Constraints do not change generated IDs, but use a fresh key for the changed formal request. Constraints run against the candidate and fail without writes. Matching media fingerprints do not relax identity constraints. Track order of clips and captions also counts. Inspect `fieldChanges` for JSON paths and before/after values. Large fields are summarized and marked omitted; reread full entities to verify them.
 
-## 下一版本与差异
+## Fork and compare versions
 
 ```text
 oc project fork <source-id> --revision <revision> --title "Next cut" --idempotency-key <key> --json
@@ -90,15 +62,11 @@ oc project diff <source-id> --against <next-id> --json
 oc project diff <id> --from-revision 7 --to-revision 8 --json
 ```
 
-fork 不关闭或编辑源工程，新工程先保持关闭，不额外弹窗口。来源 revision/hash 和原始标题随新工程持久化；
-精确重试返回同一个新工程。源 revision 不可恢复或源媒体缺失时失败，不发布残缺工程。
-已有 `project duplicate` 的关闭源工程契约不变。
+Fork neither closes nor edits the source. The new project starts closed, without another window. The new project retains source revision, hash, and title; an exact retry returns the same project. An unavailable revision or missing source media fails rather than publishing a partial fork. `project duplicate` still requires a closed source.
 
-diff 可比较打开或关闭工程。输出变化对象、字段、源/文本/时段摘要和前后总时长；稳定 ID 用于定位。
-唯一且相同的媒体指纹用于归一化导入 ID，项目相对文件位置不计作剪辑差异；普通文本不做全局字符串替换。
-它是领域结构比较，不证明两部视频逐像素相同，也不自动合并版本。
+Diff works with open or closed projects. It reports changed entities and fields, source/text/time summaries, and before/after duration. Match by stable IDs; a unique identical media fingerprint can normalize reassigned import IDs. Relative media paths do not count as edits, and ordinary text is not rewritten globally. This is a structural comparison, not pixel equivalence or a merge.
 
-## 一份核验报告
+## Generate a verification report
 
 ```text
 oc project check --json
@@ -106,11 +74,10 @@ oc project check --layout --from-frame 300 --to-frame 600 --read-frames 300,450,
 oc project check --audio-clip <voice-clip-id> --json
 ```
 
-默认检查领域结构、素材源边界、字幕词级对齐、所有composition的实际编译依赖和当前素材绑定。必需的媒体/字体/派生素材不可解析会失败；未使用的离线库素材单独列为需关注。
-`--layout` 复用几何碰撞检查；`--read-frames` 生成真实合成抽帧（指定报告路径时 PNG 放旁边）；
-`--audio-clip` 可重复，测量明确片段，不代表最终整片混音或人耳试听。
+Default checks cover structure, source bounds, caption token alignment, compilation dependencies, and media bindings. Unresolvable required media, fonts, or derivatives fail; unused offline assets are listed separately. `--layout` reuses overlap checks. `--read-frames` produces composited PNGs next to a supplied report path. `--audio-clip` can be repeated to measure selected clips, not the final mix or subjective listening quality.
 
-报告固定工程 ID 和起始 revision，结束时再次核对；中途工程变化或任一明确请求的步骤失败会返回非零退出码。
-`finalExportVerified: false` 表示没有据此验证最终成片；不能把结构/编译通过当作整片验收。
-有 `--output` 时失败也保留已得到的证据。布局和离线素材提醒见 `attentionRequired`。
-`notPerformed` 明确列出未做的完整解码、整片混音响度或人工审看。抽帧生成成功不等于已经审看了画面。
+The report pins project ID and starting revision and rechecks them before returning. A concurrent edit or a failed requested check yields a nonzero exit status. With `--output`, available evidence survives failures. Check `attentionRequired` for layout or offline assets. `notPerformed` lists unchecked items such as full decode, whole-program audio, or human review. `finalExportVerified: false` means no final export validation; frame generation is not visual approval.
+
+### Read-only source sync
+
+Use `oc project check --sync --sequence-id <id> --json` to check overlapping clips on separate video tracks when they share a video source or recorded matte/mask lineage. `syncIssues: []` means no drift was detected among those pairs. A failed check includes `error.details.syncIssues` with the first mismatch per pair in original-source frames. Unrelated overlaps and old mattes without lineage are not inferred to be related. This checks time mapping, not decoded pixels or creative quality.

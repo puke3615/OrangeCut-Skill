@@ -1,54 +1,22 @@
-## 检查各层在画面上不打架
+# Validate layout before export
 
-Caption、文字贴纸、形状和 preset 组件各说各的位置语言——caption 说
-上/中/下加偏移,贴纸和形状说距画布中心的像素,组件说画布的百分比。
-**同样写 `--y -100`,含义不同**:caption 的 `--x/--y` 是相对
-`--position` 基准点的二次偏移(竖屏 bottom 基准在画面高 76% 处,
-且随画布比例变),贴纸/形状的 `--x/--y` 是相对画布正中心的绝对像素、
-与画布无关。别把一边试出来的数字照搬给另一边。
-放下一个时,没有任何东西告诉你它是否落在另一个上面,而碰撞
-只有当有人看导出成片时才现形。
+Layout coordinates differ: caption `--x/--y` offset the `--position` anchor (portrait `bottom` is 76% down); sticker/shape `--x/--y` are pixels relative to the canvas center; presets may use canvas percentages. Do not copy offsets across systems.
 
-**写入结果自带检查。**`oc sticker add/update`、`oc shape add/update`、
-`oc caption add/update/move/add-batch` 成功后,返回的 `data.layout`
-就是只针对刚写入元素的占位报告:`conflicts`(和谁、哪段帧、盖住多少)、
-`safeZone`(竖屏时有没有闯进信息流遮挡区)、`warningCount`/`noticeCount`。
-放完先看这一段,`warningCount > 0` 就当场改位,不要等人来复审。检查本身
-出错只会变成 `data.layout.error`,写入不受影响。
+`oc sticker add/update`, `oc shape add/update`, and `oc caption add/update/move/add-batch` return `data.layout` for the written element: `conflicts`, `safeZone`, `warningCount`, and `noticeCount`. Correct warnings now. If the checker fails, `data.layout.error` does not roll back the edit.
 
-`oc layout check --json` 是全片版:把所有元素都换算到画布像素,报告
-每一对既共享时刻又共享区域的组合,以及遮挡区闯入:
+## Full or targeted checks
 
-- `conflicts[].type`:`overlap` 是真碰上;`near` 是没碰上但间距 ≤ `--near`
-  像素(默认短边的 1.5%,`--near 0` 关掉)。盒子是按字数估的,展示体会比
-  估算宽一到两成,所以 `near` 的对要用 `oc read --at <atFrame 换算秒>`
-  复核一眼——只看这一帧这一处,不用全片读图。
-- `--min-overlap <ratio>`(默认 0.12)是*较小的*那个盒子被盖住多少才值得一提。
-- `--at-frame <frame>` 把检查收窄到某一瞬画面上的东西;`--from-frame <a> --to-frame <b>`
-  是区间版——一次调用覆盖 `[a, b)` 里任何时刻在屏的元素,代替逐帧 `--at-frame` 循环。
-- 严重度:真碰撞是 `warning`;一方是刻意不透明的全幅卡片或形状色块时是
-  `notice`(黑色切卡*本来*就是要盖住画面,色块本来就是给文字垫底)。
-- 带运动曲线的元素按半秒采样,`atFrame` 是碰得最重的那一帧;静音轨和
-  disabled 片段引擎不渲染,不算元素。
-- `safeZone`:只查竖屏。抖音/TikTok 顶部约 11.5% 高、底部约 20% 高、右侧
-  约 15% 宽会被搜索栏、文案区和互动按钮盖住;元素伸进去多少像素按边报出来
-  (`zones.bottom` 等),严重度 `notice`。默认字幕位置(76% 高)不会触发。
-- `coverage`:视频轨的 clip 区间并起来必须盖满 `[0, duration)`,盖不住的
-  黑场按形态报 `warning`——`opening`(第 0 帧没画面,开屏黑闪、封面是黑的)、
-  `middle`(中段断档)、`tail`(画面结束了序列还没完,黑屏里 BGM/旁白继续响,
-  `audioDuringGap: true`)。修法:首 clip 铺到第 0 帧、尾 clip 延到序列末,
-  或把 BGM/序列时长裁到画面结束处。只在全片检查里报;写入附带的窄检查不报
-  (剪到一半尾部天然没铺满)。
+- Run `oc layout check --json` after moves and before **every** export, even for video and music only. Use `oc layout check --human` for a terminal summary. `oc layout list --json` lists estimated canvas-pixel bounds (`animated` identifies moving elements); use it to pick open space.
+- `conflicts[].type`: `overlap` or `near`. `--near` defaults to 1.5% of the short side; `--near 0` disables proximity. `--min-overlap <ratio>` defaults to 0.12 of the smaller box. Text estimates can be 10–20% too narrow: inspect the reported `atFrame` with `oc read --at <frame converted to seconds>`.
+- `--at-frame <frame>` inspects one frame; `--from-frame <a> --to-frame <b>` checks `[a, b)` in one request. Motion is sampled every half second, and `atFrame` is the worst sample. Muted tracks and disabled clips are excluded. Caption collisions are `warning`; intentional non-caption backplates can be `notice`.
 
-`oc layout list --json` 打印每个可见元素及其盒子(`animated` 标出带运动
-曲线的),这是找空位而不是靠猜的方式:读那一刻的盒子,看出空隙,放进去。
+## Transparent pixels and portrait captions
 
-**每次导出前都跑它,不限片型**——此前这里写"多覆盖层才跑",结果两条
-只有视频+BGM 的卡点片带着开屏黑闪和结尾黑屏出了片:coverage 黑场检查
-对纯视频片同样成立。移动过任何东西之后也跑。把 `warning` 当作没干完的
-活:黑场按 `coverage` 条目的修法补齐;元素冲突要么把元素挪进
-`layout list` 显示的空隙,要么缩短一方让它们不再共享时间,要么把新来的
-缩小。靠眼睛摆再重导,比跑一次检查慢。`oc export start` 发现视频轨没
-铺满时也会把 `EXPORT_VIDEO_LANE_GAP` 警告钉在响应上——这是兜底不是
-豁免,看到就回去修。首帧另用 `oc read --at 0` 看一眼封面:贴纸带入场
-动画时第 0 帧是透明的,宫格带淡入会让首帧发黑。
+- `CAPTION_OVERLAP` reports `clipId`, `captionId`, half-open `frames`, `atFrame`, `overlapRect`, and fixes. For static PNG/WebP it uses tight `alpha > 16` bounds mapped through `visualFit`, translation, scale, and rotation. Transparent margins do not count. Decode once per asset per check; report only overlaps of at least 16 square pixels and 3 pixels in both axes.
+- HTML checks statically locatable text/card regions, not full-frame transparent containers or background scrims. No remote fetch, transparent video, per-frame alpha inspection, or browser screenshot. Inspect `unverified` items, animated cases, and holes in an alpha box using `oc read --at`.
+- Portrait `safeZone` reports intersections with feed UI: top ~11.5% of height, bottom ~20%, right ~15% of width; see e.g. `zones.bottom`. The default 76% caption position avoids those zones. `safeZone[].type == "PORTRAIT_CAPTION_SAFE_ZONE"` reserves 70–84% of height even when there are no captions. Time spans already reported as `CAPTION_OVERLAP` are not double-reported; adjacent non-conflicting spans may still receive a notice.
+
+## Repair gaps, then inspect render
+
+- Full checks report uncovered video over `[0, duration)` in `coverage`: `opening` (first frame black), `middle` (gap), or `tail` (picture ends early, possibly `audioDuringGap: true`). Cover frame zero and the tail, close middle gaps, or trim picture/audio/sequence consistently. Narrow post-write checks omit coverage. `EXPORT_VIDEO_LANE_GAP` from `oc export start` is the last warning, not a waiver.
+- Move, shorten, or resize overlapping elements; check again. Use `oc read --at 0` to review the actual cover, including initial fades or initially transparent animations. Geometry is not playback review.
